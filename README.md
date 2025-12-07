@@ -2,10 +2,11 @@
 
 *A full-stack hospital workflow automation system built with Spring Boot + Next.js.*
 
-Submitted by:
-Navaneeth D (IMT2023095)
-R Ricky Roger (IMT2023098)
-Pramatha V Rao (IMT2023116)
+**Submitted by Team V322:**
+**Navaneeth D    - IMT2023095**
+**R Ricky Roger  - IMT2023098**
+**Pramatha V Rao - IMT2023116**
+
 
 ---
 
@@ -327,22 +328,9 @@ SE_HealthSync
                         ├── ReceptionistServiceTest.java
                         └── UserServiceTest.java
 
-
 ```
 
----
-
-## Authentication & Security
-
-* **JWT Authentication**
-* Stateless sessions
-* BCrypt password hashing
-* Role-based route protection
-* Secure Spring Security configuration
-
----
-
-## Database Schema (Summary)
+## Database Schema
 
 ### Key tables
 
@@ -470,7 +458,7 @@ Both services work together without modifying backend ports.
 
 ---
 
-## 🧪 Testing
+## Testing
 
 HealthSync includes complete unit tests and integration tests.
 
@@ -499,7 +487,7 @@ mvn clean test -Dskip.npm
 
 ---
 
-## 🧩 API Endpoints (Summary)
+## 🧩 API Endpoints
 
 ### Auth
 
