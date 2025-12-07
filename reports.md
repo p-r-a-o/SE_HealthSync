@@ -56,7 +56,6 @@ The HealthSync Hospital Management System provides a comprehensive software solu
 - **Pharmacy Integration**: Medication inventory management and prescription fulfillment
 - **Bed Management**: Real-time bed allocation and occupancy tracking across departments
 - **Security**: JWT-based authentication with role-based access control
-- **Reporting**: Real-time analytics for operational insights
 
 ### 1.5 References
 1. Spring Boot Documentation 3.3.4 - https://spring.io/projects/spring-boot
@@ -111,14 +110,6 @@ HealthSync has **5 primary user types**, each with distinct roles and privileges
 - Medication inventory management
 - Stock tracking and reordering
 - Technical proficiency: Moderate
-
-**5. Administrators**
-- Complete system oversight
-- User management (all roles)
-- Department and bed management
-- Report generation and analytics
-- System configuration
-- Technical proficiency: Advanced
 
 ### 2.3 Product Functions
 
@@ -184,23 +175,20 @@ HealthSync has **5 primary user types**, each with distinct roles and privileges
 │   Doctor    │──▶│  HealthSync API   │──▶│   Database   │
 └─────────────┘   │  (Spring Boot)    │   │   (MySQL)    │
                   └───────────────────┘   └──────────────┘
-┌─────────────┐       ▲                        ▲
-│Receptionist │───────┤                        │
-└─────────────┘       │                        │
-                      │                        │
-┌─────────────┐       │                        │
-│ Pharmacist  │───────┘                        │
-└─────────────┘                                │
-                                               │
-┌─────────────┐                                │
-│    Admin    │────────────────────────────────┘
-└─────────────┘
+┌─────────────┐       ▲
+│Receptionist │───────┤
+└─────────────┘       │                        
+                      │                        
+┌─────────────┐       │                        
+│ Pharmacist  │───────┘                        
+└─────────────┘                                
+
 ```
 
 ### 2.4 Operating Environment
 
 **Server Requirements:**
-- Operating System: Linux (Ubuntu 20.04+), Windows Server, or macOS
+- Operating System: Linux (Ubuntu 20.04+), Windows, or macOS
 - Java Runtime: JDK 21 or higher
 - Database: MySQL 8.0+
 - Application Server: Embedded Tomcat (Spring Boot)
@@ -214,7 +202,7 @@ HealthSync has **5 primary user types**, each with distinct roles and privileges
 
 **Network Requirements:**
 - HTTP/HTTPS protocol support
-- Port 8080 (or configured port) accessible
+- Port 5000 (or configured port) accessible
 - Port 3306 for MySQL database connection
 
 ### 2.5 Design and Architecture
@@ -336,9 +324,11 @@ Prescription
 ```
 
 ### 3.4 Sequence Diagrams
+
 *[Note: Diagrams to be inserted during documentation finalization]*
 
 **Example: Appointment Booking Sequence**
+
 1. Patient → System: Request available slots
 2. System → Database: Query doctor availability
 3. Database → System: Return available slots
@@ -355,39 +345,268 @@ Prescription
 
 The HealthSync project follows a modular folder structure with clear separation between backend (Spring Boot) and frontend (React):
 
-```
-healthsync/
-├── src/
-│   ├── main/
-│   │   ├── java/com/v322/healthsync/
-│   │   │   ├── controller/          # REST API endpoints
-│   │   │   ├── service/             # Business logic layer
-│   │   │   ├── repository/          # Data access layer (JPA)
-│   │   │   ├── entity/              # JPA entities (domain models)
-│   │   │   ├── dto/                 # Data Transfer Objects
-│   │   │   ├── config/              # Configuration classes
-│   │   │   ├── security/            # JWT & Spring Security
-│   │   │   └── HealthsyncApplication.java
-│   │   ├── frontend/                # React application
-│   │   │   ├── src/
-│   │   │   │   ├── components/      # Reusable UI components
-│   │   │   │   ├── pages/           # Page-level components
-│   │   │   │   ├── services/        # API service layer
-│   │   │   │   ├── context/         # React context (state)
-│   │   │   │   └── utils/           # Utility functions
-│   │   │   ├── public/              # Static assets
-│   │   │   └── package.json
-│   │   └── resources/
-│   │       ├── application.properties
-│   │       └── static/              # Compiled React build
-│   └── test/
-│       └── java/com/v322/healthsync/
-│           ├── repository/          # Repository tests
-│           ├── service/             # Service tests
-│           └── controller/          # Controller tests
-├── .mvn/                            # Maven wrapper
-├── pom.xml                          # Maven configuration
-└── README.md
+```bash
+SE_HealthSync
+├── application.properties
+├── mvnw
+├── mvnw.cmd
+├── node
+│   ├── node
+│   ├── npm
+│   ├── npm.cmd
+│   ├── npx
+│   └── npx.cmd
+├── pom.xml
+├── README.md
+└── src
+    ├── frontend
+    │   ├── app
+    │   │   ├── auth
+    │   │   │   ├── login
+    │   │   │   │   └── page.tsx
+    │   │   │   └── register
+    │   │   │       └── page.tsx
+    │   │   ├── doctor
+    │   │   │   ├── appointments
+    │   │   │   │   └── page.tsx
+    │   │   │   ├── availability
+    │   │   │   │   └── page.tsx
+    │   │   │   ├── patients
+    │   │   │   │   └── page.tsx
+    │   │   │   ├── prescriptions
+    │   │   │   │   └── page.tsx
+    │   │   │   └── profile
+    │   │   │       └── page.tsx
+    │   │   ├── globals.css
+    │   │   ├── layout.tsx
+    │   │   ├── page.tsx
+    │   │   ├── patient
+    │   │   │   ├── appointments
+    │   │   │   │   ├── book
+    │   │   │   │   │   └── page.tsx
+    │   │   │   │   └── page.tsx
+    │   │   │   ├── bills
+    │   │   │   │   └── page.tsx
+    │   │   │   ├── medical-history
+    │   │   │   │   └── page.tsx
+    │   │   │   ├── prescriptions
+    │   │   │   │   └── page.tsx
+    │   │   │   └── profile
+    │   │   │       └── page.tsx
+    │   │   ├── pharmacist
+    │   │   │   ├── inventory
+    │   │   │   │   └── page.tsx
+    │   │   │   └── prescriptions
+    │   │   │       └── page.tsx
+    │   │   └── receptionist
+    │   │       ├── appointments
+    │   │       │   ├── book
+    │   │       │   │   └── page.tsx
+    │   │       │   └── page.tsx
+    │   │       ├── beds
+    │   │       │   └── page.tsx
+    │   │       ├── bills
+    │   │       │   └── page.tsx
+    │   │       └── patients
+    │   │           └── page.tsx
+    │   ├── components
+    │   │   ├── bill-modal.tsx
+    │   │   ├── medication-modal.tsx
+    │   │   ├── navbar.tsx
+    │   │   ├── navbar.tsx
+    │   │   ├── theme-provider.tsx
+    │   │   ├── theme-provider.tsx
+    │   │   └── ui
+    │   │       ├── accordion.tsx
+    │   │       ├── alert-dialog.tsx
+    │   │       ├── alert.tsx
+    │   │       ├── aspect-ratio.tsx
+    │   │       ├── avatar.tsx
+    │   │       ├── badge.tsx
+    │   │       ├── breadcrumb.tsx
+    │   │       ├── button-group.tsx
+    │   │       ├── button.tsx
+    │   │       ├── calendar.tsx
+    │   │       ├── card.tsx
+    │   │       ├── carousel.tsx
+    │   │       ├── chart.tsx
+    │   │       ├── checkbox.tsx
+    │   │       ├── collapsible.tsx
+    │   │       ├── command.tsx
+    │   │       ├── context-menu.tsx
+    │   │       ├── dialog.tsx
+    │   │       ├── drawer.tsx
+    │   │       ├── dropdown-menu.tsx
+    │   │       ├── empty.tsx
+    │   │       ├── field.tsx
+    │   │       ├── form.tsx
+    │   │       ├── hover-card.tsx
+    │   │       ├── input-group.tsx
+    │   │       ├── input-otp.tsx
+    │   │       ├── input.tsx
+    │   │       ├── item.tsx
+    │   │       ├── kbd.tsx
+    │   │       ├── label.tsx
+    │   │       ├── menubar.tsx
+    │   │       ├── navigation-menu.tsx
+    │   │       ├── pagination.tsx
+    │   │       ├── popover.tsx
+    │   │       ├── progress.tsx
+    │   │       ├── radio-group.tsx
+    │   │       ├── resizable.tsx
+    │   │       ├── scroll-area.tsx
+    │   │       ├── select.tsx
+    │   │       ├── separator.tsx
+    │   │       ├── sheet.tsx
+    │   │       ├── sidebar.tsx
+    │   │       ├── skeleton.tsx
+    │   │       ├── slider.tsx
+    │   │       ├── sonner.tsx
+    │   │       ├── spinner.tsx
+    │   │       ├── switch.tsx
+    │   │       ├── table.tsx
+    │   │       ├── tabs.tsx
+    │   │       ├── textarea.tsx
+    │   │       ├── toaster.tsx
+    │   │       ├── toast.tsx
+    │   │       ├── toggle-group.tsx
+    │   │       ├── toggle.tsx
+    │   │       ├── tooltip.tsx
+    │   │       ├── use-mobile.tsx
+    │   │       └── use-toast.ts
+    │   ├── components.json
+    │   ├── hooks
+    │   │   ├── use-mobile.ts
+    │   │   └── use-toast.ts
+    │   ├── lib
+    │   │   ├── api.ts
+    │   │   ├── auth-context.tsx
+    │   │   └── utils.ts
+    │   ├── next.config.mjs
+    │   ├── next-env.d.ts
+    │   ├── package.json
+    │   ├── package-lock.json
+    │   ├── pnpm-lock.yaml
+    │   ├── postcss.config.mjs
+    │   ├── styles
+    │   │   └── globals.css
+    │   └── tsconfig.json
+    ├── main
+    │   ├── java
+    │   │   └── com
+    │   │       └── v322
+    │   │           └── healthsync
+    │   │               ├── config
+    │   │               │   └── DataInitializer.java
+    │   │               ├── controller
+    │   │               │   ├── AppointmentController.java
+    │   │               │   ├── AuthController.java
+    │   │               │   ├── BedController.java
+    │   │               │   ├── BillingController.java
+    │   │               │   ├── DepartmentController.java
+    │   │               │   ├── DoctorController.java
+    │   │               │   ├── HTMLController.java
+    │   │               │   ├── IndexController.java
+    │   │               │   ├── MedicationController.java
+    │   │               │   ├── PatientController.java
+    │   │               │   ├── PharmacistController.java
+    │   │               │   ├── PharmacyController.java
+    │   │               │   ├── PrescriptionController.java
+    │   │               │   ├── ReceptionistController.java
+    │   │               │   └── TestController.java
+    │   │               ├── dto
+    │   │               │   ├── AppointmentDTO.java
+    │   │               │   ├── BedDTO.java
+    │   │               │   ├── BillDTO.java
+    │   │               │   ├── BillItemDTO.java
+    │   │               │   ├── DepartmentDTO.java
+    │   │               │   ├── DoctorAvailabilityDTO.java
+    │   │               │   ├── DoctorDTO.java
+    │   │               │   ├── DTOMapper.java
+    │   │               │   ├── EntityMapper.java
+    │   │               │   ├── MedicationDTO.java
+    │   │               │   ├── PatientDTO.java
+    │   │               │   ├── PatientRegisterDTO.java
+    │   │               │   ├── PharmacistDTO.java
+    │   │               │   ├── PharmacyDTO.java
+    │   │               │   ├── PrescriptionDTO.java
+    │   │               │   ├── PrescriptionItemDTO.java
+    │   │               │   └── ReceptionistDTO.java
+    │   │               ├── entity
+    │   │               │   ├── Appointment.java
+    │   │               │   ├── Bed.java
+    │   │               │   ├── BillItem.java
+    │   │               │   ├── Bill.java
+    │   │               │   ├── Department.java
+    │   │               │   ├── DoctorAvailability.java
+    │   │               │   ├── Doctor.java
+    │   │               │   ├── Error.java
+    │   │               │   ├── Medication.java
+    │   │               │   ├── Patient.java
+    │   │               │   ├── Pharmacist.java
+    │   │               │   ├── Pharmacy.java
+    │   │               │   ├── PrescriptionItem.java
+    │   │               │   ├── Prescription.java
+    │   │               │   ├── Receptionist.java
+    │   │               │   └── User.java
+    │   │               ├── HospitalApplication.java
+    │   │               ├── repository
+    │   │               │   ├── AppointmentRepository.java
+    │   │               │   ├── BedRepository.java
+    │   │               │   ├── BillItemRepository.java
+    │   │               │   ├── BillRepository.java
+    │   │               │   ├── DepartmentRepository.java
+    │   │               │   ├── DoctorAvailabilityRepository.java
+    │   │               │   ├── DoctorRepository.java
+    │   │               │   ├── MedicationRepository.java
+    │   │               │   ├── PatientRepository.java
+    │   │               │   ├── PharmacistRepository.java
+    │   │               │   ├── PharmacyRepository.java
+    │   │               │   ├── PrescriptionItemRepository.java
+    │   │               │   ├── PrescriptionRepository.java
+    │   │               │   ├── ReceptionistRepository.java
+    │   │               │   └── UserRepository.java
+    │   │               ├── security
+    │   │               │   ├── JwtAuthenticationFilter.java
+    │   │               │   ├── SecurityConfig.java
+    │   │               │   └── WebConfiguration.java
+    │   │               └── service
+    │   │                   ├── AppointmentService.java
+    │   │                   ├── AuthService.java
+    │   │                   ├── BedService.java
+    │   │                   ├── BillingService.java
+    │   │                   ├── DepartmentService.java
+    │   │                   ├── DoctorService.java
+    │   │                   ├── JwtService.java
+    │   │                   ├── MedicationService.java
+    │   │                   ├── PatientService.java
+    │   │                   ├── PharmacistService.java
+    │   │                   ├── PharmacyService.java
+    │   │                   ├── PrescriptionService.java
+    │   │                   ├── ReceptionistService.java
+    │   │                   └── UserService.java
+    │   └── resources
+    │       └── application.properties
+    └── test
+        └── java
+            └── com
+                └── v322
+                    └── healthsync
+                        ├── AppointmentServiceTest.java
+                        ├── AuthServiceTest.java
+                        ├── BaseIntegrationTest.java
+                        ├── BedServiceTest.java
+                        ├── BillingServiceTest.java
+                        ├── DepartmentServiceTest.java
+                        ├── DoctorRepositoryTest.java
+                        ├── DoctorServiceTest.java
+                        ├── MedicationServiceTest.java
+                        ├── PatientServiceTest.java
+                        ├── PharmacistService.java
+                        ├── PrescriptionServiceTest.java
+                        ├── ReceptionistServiceTest.java
+                        └── UserServiceTest.java
+
 ```
 
 ### 4.2 Component Responsibilities
@@ -885,19 +1104,19 @@ The backend will now run on: `http://localhost:5000`
 
 ### 6.3 Running the Frontend
 
-### 6.2.1 Navigate to frontend folder
+#### 6.3.1 Navigate to frontend folder
 
 ```bash
 cd src/frontend
 ```
 
-### 2️ Install dependencies
+#### 6.3.2 Install dependencies
 
 ```bash
 npm install
 ```
 
-### 3️ Start development server
+### 6.3.3 Start development server
 
 ```bash
 npm run dev
