@@ -214,33 +214,33 @@ HealthSync follows a **3-tier architecture** with clear separation of concerns:
 ```
 ┌─────────────────────────────────────────────────────────┐
 │           PRESENTATION LAYER (React Frontend)           │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐    │
-│  │   Patient   │  │   Doctor    │  │    Admin    │    │
-│  │  Dashboard  │  │  Dashboard  │  │  Dashboard  │    │
-│  └─────────────┘  └─────────────┘  └─────────────┘    │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐      │
+│  │   Patient   │  │   Doctor    │  │    Admin    │      │
+│  │  Dashboard  │  │  Dashboard  │  │  Dashboard  │      │
+│  └─────────────┘  └─────────────┘  └─────────────┘      │
 └─────────────────────────────────────────────────────────┘
                           ↕ (REST API)
 ┌─────────────────────────────────────────────────────────┐
 │        APPLICATION LAYER (Spring Boot Backend)          │
-│  ┌──────────────────────────────────────────────────┐  │
-│  │            Controllers (REST Endpoints)          │  │
-│  └──────────────────────────────────────────────────┘  │
-│  ┌──────────────────────────────────────────────────┐  │
-│  │        Services (Business Logic Layer)           │  │
-│  └──────────────────────────────────────────────────┘  │
-│  ┌──────────────────────────────────────────────────┐  │
-│  │        Security (JWT Authentication)             │  │
-│  └──────────────────────────────────────────────────┘  │
+│  ┌──────────────────────────────────────────────────┐   │
+│  │            Controllers (REST Endpoints)          │   │
+│  └──────────────────────────────────────────────────┘   │
+│  ┌──────────────────────────────────────────────────┐   │
+│  │        Services (Business Logic Layer)           │   │
+│  └──────────────────────────────────────────────────┘   │
+│  ┌──────────────────────────────────────────────────┐   │
+│  │        Security (JWT Authentication)             │   │
+│  └──────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────┘
                           ↕ (JDBC/JPA)
 ┌─────────────────────────────────────────────────────────┐
 │              DATA LAYER (MySQL Database)                │
-│  ┌──────────────────────────────────────────────────┐  │
-│  │    Repositories (JPA/Hibernate Data Access)      │  │
-│  └──────────────────────────────────────────────────┘  │
-│  ┌──────────────────────────────────────────────────┐  │
-│  │         Database Schema (15+ Tables)             │  │
-│  └──────────────────────────────────────────────────┘  │
+│  ┌──────────────────────────────────────────────────┐   │
+│  │    Repositories (JPA/Hibernate Data Access)      │   │
+│  └──────────────────────────────────────────────────┘   │
+│  ┌──────────────────────────────────────────────────┐   │
+│  │         Database Schema (15+ Tables)             │   │
+│  └──────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -272,70 +272,26 @@ HealthSync follows a **3-tier architecture** with clear separation of concerns:
 ## 3. System Design
 
 ### 3.1 Use Case Diagrams
-*[Note: Diagrams to be inserted during documentation finalization]*
 
-**Primary Use Cases:**
+![Use-Case Diagram](./design_patterns/use_case.png)
 
-1. **Patient Registration Flow**
-   - Actor: Receptionist/Patient
-   - Steps: Enter details → Validate → Generate patient ID → Save to database
-
-2. **Appointment Booking Flow**
-   - Actor: Patient/Receptionist
-   - Steps: Select doctor → Check availability → Choose time slot → Confirm booking
-
-3. **Prescription Creation Flow**
-   - Actor: Doctor
-   - Steps: Complete consultation → Add medications → Specify dosage → Save prescription
-
-4. **Bill Generation Flow**
-   - Actor: Receptionist/System
-   - Steps: Gather charges → Calculate total → Generate bill → Send to patient
 
 ### 3.2 Activity Diagrams
-*[Note: Diagrams to be inserted during documentation finalization]*
 
-**Key Activity Flows:**
-- Patient check-in process
-- Doctor consultation workflow
-- Prescription fulfillment process
-- Bed allocation procedure
+![Activity Diagram](./design_patterns/activity.png)
+
 
 ### 3.3 Class Diagram
-*[Note: Diagram to be inserted during documentation finalization]*
 
-**Class Hierarchy:**
-```
-Person (abstract)
-├── Patient
-├── Doctor
-├── Receptionist
-└── Pharmacist
-
-Appointment
-├── patient: Patient
-├── doctor: Doctor
-└── status: String
-
-Prescription
-├── patient: Patient
-├── doctor: Doctor
-└── prescriptionItems: List<PrescriptionItem>
-```
+![Class Diagram](./design_patterns/class_diagram.png)
 
 ### 3.4 Sequence Diagrams
 
-*[Note: Diagrams to be inserted during documentation finalization]*
+![Sequence Diagram](./design_patterns/sequence.png)
 
-**Example: Appointment Booking Sequence**
+### 3.5 Entity Relationship Diagrams
 
-1. Patient → System: Request available slots
-2. System → Database: Query doctor availability
-3. Database → System: Return available slots
-4. System → Patient: Display slots
-5. Patient → System: Select and confirm slot
-6. System → Database: Save appointment
-7. System → Patient: Confirmation
+![Entity Relationship Diagram](./design_patterns/entity_relationship.png)
 
 ---
 
