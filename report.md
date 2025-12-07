@@ -512,195 +512,9 @@ jwt.secret=404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
 jwt.expiration=86400000
 ```
 
----
+## 6. Conclusion
 
-## 6. Setup & Installation
-
-### 6.1 Prerequisites
-
-**Required Software:**
-- **JDK 21** or higher ([Download](https://www.oracle.com/java/technologies/downloads/))
-- **Maven 3.6+** (included via Maven Wrapper)
-- **MySQL 8.0+** ([Download](https://dev.mysql.com/downloads/))
-- **Node.js 20.x** and npm 10.x ([Download](https://nodejs.org/))
-- **Git** ([Download](https://git-scm.com/))
-
-### 6.2 Running the Backend
-
-#### 6.2.0 **Prerequisites**
-
-Before running the backend, make sure you have:
-
-* **WSL/Ubuntu** or regular Ubuntu
-* **Docker** installed
-
-  * If using WSL: Docker Desktop on **Windows** is enough; WSL will use it automatically
-* **MySQL** installed on Linux/WSL
-
-Verify:
-
-```bash
-docker --version
-mysql --version
-```
-
----
-
-#### 6.2.1 **Configure application.properties**
-
-Ideally **do NOT modify** `application.properties`.
-But **if required**, only edit this file: `/src/main/resources/application.properties`
-
-Use:
-
-```properties
-spring.application.name=healthsync
-server.port=5000
-spring.datasource.url=jdbc:mysql://localhost:3306/healthsync
-spring.datasource.username=root
-spring.datasource.password=password
-```
-
-⚠️ Do **not** edit any auto-generated files inside `src/` other than this one.
-
----
-
-#### 6.2.2 **Build the Backend**
-
-From the project root:
-
-```bash
-mvn clean install -Dskip.npm
-```
-
-This will:
-
-* Build the backend
-* Skip building the frontend (because Next.js builds separately)
-* Generate the final JAR inside `/target`
-
----
-
-#### 6.2.3 **Run the Backend**
-
-Navigate to the `target` directory:
-
-```bash
-cd target
-```
-
-Run the jar:
-
-```bash
-java -jar healthsync-<version>.jar
-```
-
-The backend will now run on: `http://localhost:5000`
-
-
----
-
-### 6.3 Running the Frontend
-
-#### 6.3.1 Navigate to frontend folder
-
-```bash
-cd src/frontend
-```
-
-#### 6.3.2 Install dependencies
-
-```bash
-npm install
-```
-
-### 6.3.3 Start development server
-
-```bash
-npm run dev
-```
-
-Frontend will run at: `http://localhost:3000`
-
----
-
-### 6.5 Production Build
-
-**Build Full Application:**
-```bash
-# From project root
-./mvnw clean install
-
-# This will:
-# 1. Install frontend dependencies
-# 2. Build React application
-# 3. Copy build to Spring Boot static resources
-# 4. Package everything into a single JAR
-```
-
-**Run Production Build:**
-```bash
-java -jar target/healthsync-0.0.1-SNAPSHOT.jar
-```
-
-Access application at `http://localhost:8080`
-
-### 6.6 Running Tests
-
-**Backend Tests:**
-```bash
-# Run all tests
-./mvnw test
-
-# Run specific test class
-./mvnw test -Dtest=PatientRepositoryTest
-
-# Run with coverage
-./mvnw test jacoco:report
-```
-
-**Frontend Tests:**
-```bash
-cd src/main/frontend
-npm test
-```
-
-### 6.7 Troubleshooting
-
-**Common Issues:**
-
-1. **Port 8080 already in use:**
-```properties
-# Change port in application.properties
-server.port=8081
-```
-
-2. **MySQL Connection Refused:**
-```bash
-# Check MySQL service status
-sudo systemctl status mysql
-
-# Restart MySQL
-sudo systemctl restart mysql
-```
-
-3. **Frontend build fails:**
-```bash
-# Clear npm cache
-npm cache clean --force
-rm -rf node_modules package-lock.json
-npm install
-```
-
-4. **JWT Token Errors:**
-- Ensure `jwt.secret` is set in application.properties
-- Token expiration: 24 hours by default
-
----
-
-## 7. Conclusion
-
-### 7.1 System Summary
+### 6.1 System Summary
 
 The HealthSync Hospital Management System successfully delivers a comprehensive solution for modern healthcare operations. By implementing a robust 3-tier architecture with Spring Boot and React, the system provides:
 
@@ -710,7 +524,7 @@ The HealthSync Hospital Management System successfully delivers a comprehensive 
 - **Data Integrity**: JPA/Hibernate maintains consistent database state
 - **User-Friendly Interface**: Intuitive React-based dashboards for all user roles
 
-### 7.2 Design Pattern Benefits
+### 6.2 Design Pattern Benefits
 
 The implementation of multiple design patterns ensures:
 
@@ -734,7 +548,7 @@ The implementation of multiple design patterns ensures:
 - Enhanced testability
 - Spring-managed lifecycle simplifies resource management
 
-### 7.3 Testing Strategy
+### 6.3 Testing Strategy
 
 **Test Coverage:**
 - Unit tests for individual components
@@ -762,7 +576,7 @@ The implementation of multiple design patterns ensures:
 - HTTPS for production deployments
 - Sensitive data encryption
 
-### 7.5 Scalability and Flexibility
+### 6.5 Scalability and Flexibility
 
 **Horizontal Scalability:**
 - Stateless REST API design
@@ -796,7 +610,7 @@ The implementation of multiple design patterns ensures:
 - Backward-compatible API changes
 - Comprehensive testing before deployment
 
-### 7.7 Future Enhancements
+### 6.7 Future Enhancements
 
 **Potential Features:**
 1. **Patient Portal Mobile App**
@@ -832,7 +646,7 @@ The implementation of multiple design patterns ensures:
    - Patient readmission risk prediction
    - Resource allocation optimization
 
-### 7.8 Deployment Considerations
+### 6.8 Deployment Considerations
 
 **Production Deployment:**
 - Use production-grade database server
@@ -853,7 +667,7 @@ The implementation of multiple design patterns ensures:
 - Staged deployments (dev → staging → production)
 - Blue-green deployment for zero downtime
 
-### 7.9 Project Success Metrics
+### 6.9 Project Success Metrics
 
 **Achieved Goals:**
 ✓ Complete patient lifecycle management
