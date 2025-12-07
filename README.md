@@ -60,7 +60,7 @@ It uses a **Spring Boot backend**, a **Next.js (App Router) frontend**, **MySQL*
 
 ## 📂 Project Structure
 
-```
+```bash
 SE_HealthSync
 ├── application.properties
 ├── mvnw
@@ -456,91 +456,145 @@ Relationships include:
 
 ---
 
-## 🧪 Testing
+## ▶️ Running the Backend
 
-### ✔ Unit Tests
+### 0️ **Prerequisites**
 
-* Service logic using **Mockito**
-* DTO mapping tests
-* Validation tests
-* Repository layer tests
+Before running the backend, make sure you have:
 
-### ✔ Integration Tests
+* **WSL/Ubuntu** or regular Ubuntu
+* **Docker** installed
 
-* Uses **Testcontainers** for MySQL
-* Tests for:
+  * If using WSL: Docker Desktop on **Windows** is enough; WSL will use it automatically
+* **MySQL** installed on Linux/WSL
 
-  * Appointment booking + conflict rules
-  * Billing calculation
-  * Doctor repository
-  * Medication & pharmacy logic
-  * Authentication logic
+Verify:
 
-Run all tests:
-
-```
-./mvnw test
+```bash
+docker --version
+mysql --version
 ```
 
 ---
 
-## ▶️ Running the Backend
+### 1️ **Configure application.properties**
 
-### 1️⃣ **Configure MySQL**
+Ideally **do NOT modify** `application.properties`.
+But **if required**, only edit this file:
 
-Create database:
-
-```sql
-CREATE DATABASE healthsync;
+```
+/src/main/resources/application.properties
 ```
 
-Update `src/main/resources/application.properties`:
+Use:
 
 ```properties
+spring.application.name=healthsync
+server.port=5000
 spring.datasource.url=jdbc:mysql://localhost:3306/healthsync
 spring.datasource.username=root
-spring.datasource.password=your_password
-spring.jpa.hibernate.ddl-auto=update
+spring.datasource.password=password
 ```
 
-### 2️⃣ **Run Spring Boot**
+⚠️ Do **not** edit any auto-generated files inside `src/` other than this one.
 
-```
-./mvnw spring-boot:run
+---
+
+### 2️ **Build the Backend**
+
+From the project root:
+
+```bash
+mvn clean install -Dskip.npm
 ```
 
-Backend runs on:
+This will:
 
+* Build the backend
+* Skip building the frontend (because Next.js builds separately)
+* Generate the final JAR inside `/target`
+
+---
+
+### 3️ **Run the Backend**
+
+Navigate to the `target` directory:
+
+```bash
+cd target
 ```
-http://localhost:5000
+
+Run the jar:
+
+```bash
+java -jar healthsync-<version>.jar
 ```
+
+The backend will now run on: `http://localhost:5000`
+
 
 ---
 
 ## ▶️ Running the Frontend
 
-### 1️⃣ Go to the frontend directory:
+### 1️ Navigate to frontend folder
 
-```
-cd src/main/frontend
+```bash
+cd src/frontend
 ```
 
-### 2️⃣ Install dependencies:
+### 2️ Install dependencies
 
-```
+```bash
 npm install
 ```
 
-### 3️⃣ Start dev server:
+### 3️ Start development server
 
-```
+```bash
 npm run dev
 ```
 
-Frontend runs on:
+Frontend will run at: `http://localhost:3000`
 
-```
-http://localhost:3000
+---
+
+## 🟢 Final Setup Summary
+
+After following the steps:
+
+* **Backend:** running at `http://localhost:5000`
+* **Frontend:** running at `http://localhost:3000`
+
+Both services work together without modifying backend ports.
+
+---
+
+## 🧪 Testing
+
+HealthSync includes complete unit tests and integration tests.
+
+### ✔ Unit Tests
+
+* DTO mapping tests
+* Validation tests
+* Repository behavior tests
+
+### ✔ Integration Tests
+
+* **Testcontainers** for isolated MySQL testing
+* Covers:
+
+  * Appointment scheduling & conflict rules
+  * Billing calculation
+  * Doctor repository
+  * Medication & pharmacy workflow
+  * Authentication logic
+
+Run all tests:
+
+```bash
+mvn clean test -Dskip.npm
 ```
 
 ---
@@ -549,7 +603,7 @@ http://localhost:3000
 
 ### Auth
 
-```
+```bash
 POST /api/auth/login
 POST /api/auth/register
 GET  /api/auth/me
@@ -557,7 +611,7 @@ GET  /api/auth/me
 
 ### Patients
 
-```
+```bash
 GET    /api/patients
 POST   /api/patients
 PUT    /api/patients/{id}
@@ -566,7 +620,7 @@ GET    /api/patients/{id}
 
 ### Doctors
 
-```
+```bash
 GET    /api/doctors
 POST   /api/doctors
 GET    /api/doctors/{id}
@@ -574,7 +628,7 @@ GET    /api/doctors/{id}
 
 ### Appointments
 
-```
+```bash
 POST   /api/appointments
 GET    /api/appointments/patient/{id}
 GET    /api/appointments/doctor/{id}
@@ -582,14 +636,14 @@ GET    /api/appointments/doctor/{id}
 
 ### Prescriptions
 
-```
+```bash
 POST   /api/prescriptions
 GET    /api/prescriptions/patient/{id}
 ```
 
 ### Billing
 
-```
+```bash
 POST  /api/bills
 PUT   /api/bills/{id}/payment
 ```
@@ -626,11 +680,3 @@ Next.js Frontend → REST API → Spring Boot → JPA/Hibernate → MySQL
 HealthSync delivers a fully functional hospital automation system built with modern full-stack architecture. It is modular, scalable, secure, and supported by comprehensive testing and industry-standard patterns.
 
 ---
-
-If you want, I can also generate:
-✅ A **diagram-based README**
-✅ A **badge-enhanced GitHub README**
-✅ A **separate CONTRIBUTING.md**
-✅ A **Docker + docker-compose setup**
-
-Just tell me — I can generate those instantly.
