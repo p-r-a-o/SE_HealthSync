@@ -54,6 +54,9 @@ public class MedicationService {
         if (updatedMedication.getPharmacy() != null) {
             existingMedication.setPharmacy(updatedMedication.getPharmacy());
         }
+        if (updatedMedication.getQuantity() != null) {
+            existingMedication.setQuantity(updatedMedication.getQuantity());
+        }
 
         return medicationRepository.save(existingMedication);
     }
@@ -107,7 +110,16 @@ public class MedicationService {
             Medication medication = item.getMedication();
             if (medication == null) {
                 throw new RuntimeException("Medication not found in prescription item");
+            }else if (medication.getQuantity() <= item.getQuantity()) {
+                throw new RuntimeException("Not enough quantity of medication");
             }
+        }
+        
+        // Update medication quantities
+        for (PrescriptionItem item : items) {
+            Medication medication = item.getMedication();
+            medication.setQuantity(medication.getQuantity() - item.getQuantity());
+            medicationRepository.save(medication);
         }
 
         // Update prescription status to dispensed

@@ -44,6 +44,9 @@ public class Medication {
     @OneToMany(mappedBy = "medication", cascade = CascadeType.ALL)
     private List<PrescriptionItem> prescriptionItems;
 
+    @Column(name = "quantity")
+    private Integer quantity;
+
     // getters and setters
     public String getMedicationId() {
         return medicationId;
@@ -96,5 +99,12 @@ public class Medication {
     }
     public List<PrescriptionItem> getPrescriptionItems() {
         return prescriptionItems;
+    }
+    public Integer getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(Integer quantity) {
+        this.quantity = quantity;
     }
 }

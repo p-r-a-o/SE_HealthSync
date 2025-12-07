@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/bills")
@@ -39,7 +40,7 @@ public class BillingController {
     @PostMapping("/with-items")
     public ResponseEntity<BillDTO> generateBillWithItems(@RequestBody BillRequest request) {
         try {
-            Bill bill = billingService.generateBillWithItems(request.getBill(), request.getItems());
+            Bill bill = billingService.generateBillWithItems(request.getBill(entityMapper), request.getItems(entityMapper));
             return new ResponseEntity<>(DTOMapper.toBillDTO(bill), HttpStatus.CREATED);
         } catch (Exception e) {
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -211,12 +212,12 @@ public class BillingController {
 
     // Helper class for request body
     public static class BillRequest {
-        private Bill bill;
-        private List<BillItem> items;
+        private BillDTO bill;
+        private List<BillItemDTO> items;
 
-        public Bill getBill() { return bill; }
-        public void setBill(Bill bill) { this.bill = bill; }
-        public List<BillItem> getItems() { return items; }
-        public void setItems(List<BillItem> items) { this.items = items; }
+        public Bill getBill(EntityMapper entityMapper) { return entityMapper.toBillEntity(bill); }
+        public void setBill(BillDTO bill) { this.bill = bill; }
+        public List<BillItem> getItems(EntityMapper entityMapper) { List<BillItem> requestList = items.stream().map(entityMapper::toBillItemEntity).collect(Collectors.toList()); return requestList; }
+        public void setItems(List<BillItemDTO> items) { this.items = items; }
     }
 }

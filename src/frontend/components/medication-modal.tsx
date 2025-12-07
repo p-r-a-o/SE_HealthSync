@@ -15,6 +15,7 @@ interface MedicationFormData {
   unitPrice: string
   pharmacyId?: string
   pharmacyLocation?: string
+  quantity: number
 }
 
 interface MedicationModalProps {
@@ -30,6 +31,7 @@ interface MedicationModalProps {
     unitPrice: number
     pharmacyId?: string
     pharmacyLocation?: string
+    quantity: number
   }
 }
 
@@ -42,6 +44,7 @@ export function MedicationModal({ isOpen, onClose, onSave, initialData }: Medica
     unitPrice: "",
     pharmacyId: "",
     pharmacyLocation: "",
+    quantity: 1,
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
@@ -56,6 +59,7 @@ export function MedicationModal({ isOpen, onClose, onSave, initialData }: Medica
         unitPrice: initialData.unitPrice.toString(),
         pharmacyId: initialData.pharmacyId || "",
         pharmacyLocation: initialData.pharmacyLocation || "",
+        quantity: initialData.quantity,
       })
     } else {
       setFormData({
@@ -66,6 +70,7 @@ export function MedicationModal({ isOpen, onClose, onSave, initialData }: Medica
         unitPrice: "",
         pharmacyId: "",
         pharmacyLocation: "",
+        quantity: 1,
       })
     }
     setError("")
@@ -108,6 +113,7 @@ export function MedicationModal({ isOpen, onClose, onSave, initialData }: Medica
         unitPrice: Number.parseFloat(formData.unitPrice),
         pharmacyId: formData.pharmacyId?.trim() || "",
         pharmacyLocation: formData.pharmacyLocation?.trim() || "",
+        quantity: formData.quantity,
       })
     } catch (err: any) {
       setError(err.message || "Failed to save medication")
@@ -219,6 +225,18 @@ useEffect(() => {
                 step="0.01"
                 min="0"
                 placeholder="0.00"
+                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold mb-1">Quantity</label>
+              <input
+                type="number"
+                name="quantity"
+                value={formData.quantity}
+                onChange={handleChange}
+                disabled={loading}
+                min="1"
                 className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
               />
             </div>

@@ -398,6 +398,7 @@ public class DataInitializer implements CommandLineRunner {
                 .description("Pain reliever and blood thinner")
                 .unitPrice(new BigDecimal("5.50"))
                 .pharmacy(pharmacy)
+                .quantity(50)
                 .build(),
             
             Medication.builder()
@@ -408,6 +409,7 @@ public class DataInitializer implements CommandLineRunner {
                 .description("ACE inhibitor for blood pressure")
                 .unitPrice(new BigDecimal("12.00"))
                 .pharmacy(pharmacy)
+                .quantity(50)
                 .build(),
             
             Medication.builder()
@@ -418,6 +420,7 @@ public class DataInitializer implements CommandLineRunner {
                 .description("Diabetes medication")
                 .unitPrice(new BigDecimal("8.75"))
                 .pharmacy(pharmacy)
+                .quantity(50)
                 .build(),
             
             Medication.builder()
@@ -428,6 +431,7 @@ public class DataInitializer implements CommandLineRunner {
                 .description("Antibiotic")
                 .unitPrice(new BigDecimal("15.00"))
                 .pharmacy(pharmacy)
+                .quantity(50)
                 .build(),
             
             Medication.builder()
@@ -438,6 +442,7 @@ public class DataInitializer implements CommandLineRunner {
                 .description("Asthma inhaler")
                 .unitPrice(new BigDecimal("25.00"))
                 .pharmacy(pharmacy)
+                .quantity(50)
                 .build(),
             
             Medication.builder()
@@ -448,6 +453,7 @@ public class DataInitializer implements CommandLineRunner {
                 .description("Pain and fever reducer")
                 .unitPrice(new BigDecimal("3.50"))
                 .pharmacy(pharmacy)
+                .quantity(50)
                 .build()
         };
 

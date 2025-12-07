@@ -19,6 +19,7 @@ public class MedicationDTO {
     private BigDecimal unitPrice;
     private String pharmacyId;
     private String pharmacyLocation;
+    private Integer quantity;
 
     // getters and setters
     public String getMedicationId() {
@@ -83,5 +84,12 @@ public class MedicationDTO {
 
     public void setPharmacyLocation(String pharmacyLocation) {
         this.pharmacyLocation = pharmacyLocation;
+    }
+    public Integer getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(Integer quantity) {
+        this.quantity = quantity;
     }
 }

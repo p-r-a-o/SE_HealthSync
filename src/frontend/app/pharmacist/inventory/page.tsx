@@ -16,6 +16,7 @@ interface Medication {
   unitPrice: number
   pharmacyId: string
   pharmacyLocation: string
+  quantity: number
 }
 
 export default function PharmacistInventoryPage() {
@@ -173,6 +174,12 @@ export default function PharmacistInventoryPage() {
                     <p className="font-semibold">{med.pharmacyLocation}</p>
                   </div>
                 )}
+                <div>
+                  <p className="text-gray-600">Quantity</p>
+                  <p className="font-semibold text-green-600">
+                    {med.quantity}
+                  </p>
+                </div>
               </div>
 
               {/* Action Buttons */}

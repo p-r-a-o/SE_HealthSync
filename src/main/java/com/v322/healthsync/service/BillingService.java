@@ -27,8 +27,8 @@ public class BillingService {
     public Bill generateBill(Bill bill) {
         bill.setBillId("BILL-" + UUID.randomUUID().toString());
         bill.setBillDate(LocalDate.now());
-        bill.setStatus("PENDING");
-        bill.setPaidAmount(BigDecimal.ZERO);
+        // bill.setStatus("PENDING");
+        // bill.setPaidAmount(BigDecimal.ZERO);
         
         return billRepository.save(bill);
     }
@@ -58,6 +58,7 @@ public class BillingService {
         }
         
         savedBill.setTotalAmount(totalAmount);
+        savedBill.setPaidAmount(bill.getPaidAmount());
         return billRepository.save(savedBill);
     }
 

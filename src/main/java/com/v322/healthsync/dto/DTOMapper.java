@@ -253,6 +253,7 @@ public class DTOMapper {
             .manufacturer(medication.getManufacturer())
             .description(medication.getDescription())
             .unitPrice(medication.getUnitPrice())
+            .quantity(medication.getQuantity())
             .build();
         
         if (medication.getPharmacy() != null) {

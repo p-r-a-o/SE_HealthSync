@@ -55,7 +55,6 @@ public class EntityMapper {
         patient.setNotes(dto.getNotes());
         return patient;
     }
-
     public Patient toPatientEntity(PatientRegisterDTO dto) {
         if (dto == null) return null;
         
@@ -69,7 +68,6 @@ public class EntityMapper {
         patient.setContactNumber(dto.getContactNumber());
         patient.setEmail(dto.getEmail());
         patient.setCity(dto.getCity());
-        patient.setRegistrationDate(LocalDate.now());
         patient.setNotes(dto.getNotes());
         patient.setPassword(dto.getPassword());
         return patient;
@@ -277,6 +275,7 @@ public class EntityMapper {
             .manufacturer(dto.getManufacturer())
             .description(dto.getDescription())
             .unitPrice(dto.getUnitPrice())
+            .quantity(dto.getQuantity())
             .build();
         
         // Set pharmacy relationship if pharmacyId is provided
