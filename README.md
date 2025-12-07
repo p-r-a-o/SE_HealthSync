@@ -4,7 +4,7 @@
 
 ---
 
-## 🚀 Overview
+## Overview
 
 **HealthSync** is an enterprise-grade hospital management system designed to streamline patient care, appointments, prescriptions, billing, pharmacy inventory, bed allocations, and role-based dashboards.
 
@@ -12,16 +12,16 @@ It uses a **Spring Boot backend**, a **Next.js (App Router) frontend**, **MySQL*
 
 ---
 
-## ✨ Features
+## Features
 
-### 🧑‍⚕️ **Role-Based Interfaces**
+### **Role-Based Interfaces**
 
 * **Patient:** appointments, bills, prescriptions, medical history, profile
 * **Doctor:** availability, appointments, prescriptions, patient list
 * **Receptionist:** patient registration, appointments, beds, billing
 * **Pharmacist:** prescriptions, medication inventory
 
-### 🏥 **Core Modules**
+### **Core Modules**
 
 * Patient Management
 * Doctor Management & Availability
@@ -36,7 +36,7 @@ It uses a **Spring Boot backend**, a **Next.js (App Router) frontend**, **MySQL*
 
 ---
 
-## 🧱 **Technology Stack**
+## **Technology Stack**
 
 ### **Backend**
 
@@ -58,7 +58,7 @@ It uses a **Spring Boot backend**, a **Next.js (App Router) frontend**, **MySQL*
 
 ---
 
-## 📂 Project Structure
+## Project Structure
 
 ```bash
 SE_HealthSync
@@ -78,223 +78,133 @@ SE_HealthSync
     │   ├── app
     │   │   ├── auth
     │   │   │   ├── login
-    │   │   │   │   ├── page.tsx
-    │   │   │   │   └── page.tsxZone.Identifier
+    │   │   │   │   └── page.tsx
     │   │   │   └── register
-    │   │   │       ├── page.tsx
-    │   │   │       └── page.tsxZone.Identifier
+    │   │   │       └── page.tsx
     │   │   ├── doctor
     │   │   │   ├── appointments
-    │   │   │   │   ├── page.tsx
-    │   │   │   │   └── page.tsxZone.Identifier
+    │   │   │   │   └── page.tsx
     │   │   │   ├── availability
-    │   │   │   │   ├── page.tsx
-    │   │   │   │   └── page.tsxZone.Identifier
+    │   │   │   │   └── page.tsx
     │   │   │   ├── patients
-    │   │   │   │   ├── page.tsx
-    │   │   │   │   └── page.tsxZone.Identifier
+    │   │   │   │   └── page.tsx
     │   │   │   ├── prescriptions
-    │   │   │   │   ├── page.tsx
-    │   │   │   │   └── page.tsxZone.Identifier
+    │   │   │   │   └── page.tsx
     │   │   │   └── profile
     │   │   │       └── page.tsx
     │   │   ├── globals.css
-    │   │   ├── globals.cssZone.Identifier
     │   │   ├── layout.tsx
-    │   │   ├── layout.tsxZone.Identifier
     │   │   ├── page.tsx
-    │   │   ├── page.tsxZone.Identifier
     │   │   ├── patient
     │   │   │   ├── appointments
     │   │   │   │   ├── book
-    │   │   │   │   │   ├── page.tsx
-    │   │   │   │   │   └── page.tsxZone.Identifier
-    │   │   │   │   ├── page.tsx
-    │   │   │   │   └── page.tsxZone.Identifier
+    │   │   │   │   │   └── page.tsx
+    │   │   │   │   └── page.tsx
     │   │   │   ├── bills
-    │   │   │   │   ├── page.tsx
-    │   │   │   │   └── page.tsxZone.Identifier
+    │   │   │   │   └── page.tsx
     │   │   │   ├── medical-history
-    │   │   │   │   ├── page.tsx
-    │   │   │   │   └── page.tsxZone.Identifier
+    │   │   │   │   └── page.tsx
     │   │   │   ├── prescriptions
-    │   │   │   │   ├── page.tsx
-    │   │   │   │   └── page.tsxZone.Identifier
+    │   │   │   │   └── page.tsx
     │   │   │   └── profile
-    │   │   │       ├── page.tsx
-    │   │   │       └── page.tsxZone.Identifier
+    │   │   │       └── page.tsx
     │   │   ├── pharmacist
     │   │   │   ├── inventory
-    │   │   │   │   ├── page.tsx
-    │   │   │   │   └── page.tsxZone.Identifier
+    │   │   │   │   └── page.tsx
     │   │   │   └── prescriptions
-    │   │   │       ├── page.tsx
-    │   │   │       └── page.tsxZone.Identifier
+    │   │   │       └── page.tsx
     │   │   └── receptionist
     │   │       ├── appointments
     │   │       │   ├── book
-    │   │       │   │   ├── page.tsx
-    │   │       │   │   └── page.tsxZone.Identifier
-    │   │       │   ├── page.tsx
-    │   │       │   └── page.tsxZone.Identifier
+    │   │       │   │   └── page.tsx
+    │   │       │   └── page.tsx
     │   │       ├── beds
-    │   │       │   ├── page.tsx
-    │   │       │   └── page.tsxZone.Identifier
+    │   │       │   └── page.tsx
     │   │       ├── bills
-    │   │       │   ├── page.tsx
-    │   │       │   └── page.tsxZone.Identifier
+    │   │       │   └── page.tsx
     │   │       └── patients
-    │   │           ├── page.tsx
-    │   │           └── page.tsxZone.Identifier
+    │   │           └── page.tsx
     │   ├── components
     │   │   ├── bill-modal.tsx
     │   │   ├── medication-modal.tsx
     │   │   ├── navbar.tsx
-    │   │   ├── navbar.tsxZone.Identifier
+    │   │   ├── navbar.tsx
     │   │   ├── theme-provider.tsx
-    │   │   ├── theme-provider.tsxZone.Identifier
+    │   │   ├── theme-provider.tsx
     │   │   └── ui
     │   │       ├── accordion.tsx
-    │   │       ├── accordion.tsxZone.Identifier
     │   │       ├── alert-dialog.tsx
-    │   │       ├── alert-dialog.tsxZone.Identifier
     │   │       ├── alert.tsx
-    │   │       ├── alert.tsxZone.Identifier
     │   │       ├── aspect-ratio.tsx
-    │   │       ├── aspect-ratio.tsxZone.Identifier
     │   │       ├── avatar.tsx
-    │   │       ├── avatar.tsxZone.Identifier
     │   │       ├── badge.tsx
-    │   │       ├── badge.tsxZone.Identifier
     │   │       ├── breadcrumb.tsx
-    │   │       ├── breadcrumb.tsxZone.Identifier
     │   │       ├── button-group.tsx
-    │   │       ├── button-group.tsxZone.Identifier
     │   │       ├── button.tsx
-    │   │       ├── button.tsxZone.Identifier
     │   │       ├── calendar.tsx
-    │   │       ├── calendar.tsxZone.Identifier
     │   │       ├── card.tsx
-    │   │       ├── card.tsxZone.Identifier
     │   │       ├── carousel.tsx
-    │   │       ├── carousel.tsxZone.Identifier
     │   │       ├── chart.tsx
-    │   │       ├── chart.tsxZone.Identifier
     │   │       ├── checkbox.tsx
-    │   │       ├── checkbox.tsxZone.Identifier
     │   │       ├── collapsible.tsx
-    │   │       ├── collapsible.tsxZone.Identifier
     │   │       ├── command.tsx
-    │   │       ├── command.tsxZone.Identifier
     │   │       ├── context-menu.tsx
-    │   │       ├── context-menu.tsxZone.Identifier
     │   │       ├── dialog.tsx
-    │   │       ├── dialog.tsxZone.Identifier
     │   │       ├── drawer.tsx
-    │   │       ├── drawer.tsxZone.Identifier
     │   │       ├── dropdown-menu.tsx
-    │   │       ├── dropdown-menu.tsxZone.Identifier
     │   │       ├── empty.tsx
-    │   │       ├── empty.tsxZone.Identifier
     │   │       ├── field.tsx
-    │   │       ├── field.tsxZone.Identifier
     │   │       ├── form.tsx
-    │   │       ├── form.tsxZone.Identifier
     │   │       ├── hover-card.tsx
-    │   │       ├── hover-card.tsxZone.Identifier
     │   │       ├── input-group.tsx
-    │   │       ├── input-group.tsxZone.Identifier
     │   │       ├── input-otp.tsx
-    │   │       ├── input-otp.tsxZone.Identifier
     │   │       ├── input.tsx
-    │   │       ├── input.tsxZone.Identifier
     │   │       ├── item.tsx
-    │   │       ├── item.tsxZone.Identifier
     │   │       ├── kbd.tsx
-    │   │       ├── kbd.tsxZone.Identifier
     │   │       ├── label.tsx
-    │   │       ├── label.tsxZone.Identifier
     │   │       ├── menubar.tsx
-    │   │       ├── menubar.tsxZone.Identifier
     │   │       ├── navigation-menu.tsx
-    │   │       ├── navigation-menu.tsxZone.Identifier
     │   │       ├── pagination.tsx
-    │   │       ├── pagination.tsxZone.Identifier
     │   │       ├── popover.tsx
-    │   │       ├── popover.tsxZone.Identifier
     │   │       ├── progress.tsx
-    │   │       ├── progress.tsxZone.Identifier
     │   │       ├── radio-group.tsx
-    │   │       ├── radio-group.tsxZone.Identifier
     │   │       ├── resizable.tsx
-    │   │       ├── resizable.tsxZone.Identifier
     │   │       ├── scroll-area.tsx
-    │   │       ├── scroll-area.tsxZone.Identifier
     │   │       ├── select.tsx
-    │   │       ├── select.tsxZone.Identifier
     │   │       ├── separator.tsx
-    │   │       ├── separator.tsxZone.Identifier
     │   │       ├── sheet.tsx
-    │   │       ├── sheet.tsxZone.Identifier
     │   │       ├── sidebar.tsx
-    │   │       ├── sidebar.tsxZone.Identifier
     │   │       ├── skeleton.tsx
-    │   │       ├── skeleton.tsxZone.Identifier
     │   │       ├── slider.tsx
-    │   │       ├── slider.tsxZone.Identifier
     │   │       ├── sonner.tsx
-    │   │       ├── sonner.tsxZone.Identifier
     │   │       ├── spinner.tsx
-    │   │       ├── spinner.tsxZone.Identifier
     │   │       ├── switch.tsx
-    │   │       ├── switch.tsxZone.Identifier
     │   │       ├── table.tsx
-    │   │       ├── table.tsxZone.Identifier
     │   │       ├── tabs.tsx
-    │   │       ├── tabs.tsxZone.Identifier
     │   │       ├── textarea.tsx
-    │   │       ├── textarea.tsxZone.Identifier
     │   │       ├── toaster.tsx
-    │   │       ├── toaster.tsxZone.Identifier
     │   │       ├── toast.tsx
-    │   │       ├── toast.tsxZone.Identifier
     │   │       ├── toggle-group.tsx
-    │   │       ├── toggle-group.tsxZone.Identifier
     │   │       ├── toggle.tsx
-    │   │       ├── toggle.tsxZone.Identifier
     │   │       ├── tooltip.tsx
-    │   │       ├── tooltip.tsxZone.Identifier
     │   │       ├── use-mobile.tsx
-    │   │       ├── use-mobile.tsxZone.Identifier
-    │   │       ├── use-toast.ts
-    │   │       └── use-toast.tsZone.Identifier
+    │   │       └── use-toast.ts
     │   ├── components.json
-    │   ├── components.jsonZone.Identifier
     │   ├── hooks
     │   │   ├── use-mobile.ts
-    │   │   ├── use-mobile.tsZone.Identifier
-    │   │   ├── use-toast.ts
-    │   │   └── use-toast.tsZone.Identifier
+    │   │   └── use-toast.ts
     │   ├── lib
     │   │   ├── api.ts
-    │   │   ├── api.tsZone.Identifier
     │   │   ├── auth-context.tsx
-    │   │   ├── auth-context.tsxZone.Identifier
-    │   │   ├── utils.ts
-    │   │   └── utils.tsZone.Identifier
+    │   │   └── utils.ts
     │   ├── next.config.mjs
-    │   ├── next.config.mjsZone.Identifier
     │   ├── next-env.d.ts
     │   ├── package.json
-    │   ├── package.jsonZone.Identifier
     │   ├── package-lock.json
     │   ├── pnpm-lock.yaml
-    │   ├── pnpm-lock.yamlZone.Identifier
     │   ├── postcss.config.mjs
-    │   ├── postcss.config.mjsZone.Identifier
     │   ├── styles
-    │   │   ├── globals.css
-    │   │   └── globals.cssZone.Identifier
+    │   │   └── globals.css
     │   └── tsconfig.json
     ├── main
     │   ├── java
@@ -391,8 +301,7 @@ SE_HealthSync
     │   │                   ├── ReceptionistService.java
     │   │                   └── UserService.java
     │   └── resources
-    │       ├── application.properties
-    │       └── application.propertiesZone.Identifier
+    │       └── application.properties
     └── test
         └── java
             └── com
@@ -418,7 +327,7 @@ SE_HealthSync
 
 ---
 
-## 🔐 Authentication & Security
+## Authentication & Security
 
 * **JWT Authentication**
 * Stateless sessions
@@ -428,7 +337,7 @@ SE_HealthSync
 
 ---
 
-## 🗄 Database Schema (Summary)
+## Database Schema (Summary)
 
 ### Key tables
 
@@ -456,7 +365,7 @@ Relationships include:
 
 ---
 
-## ▶️ Running the Backend
+## Running the Backend
 
 ### 0️ **Prerequisites**
 
@@ -480,11 +389,7 @@ mysql --version
 ### 1️ **Configure application.properties**
 
 Ideally **do NOT modify** `application.properties`.
-But **if required**, only edit this file:
-
-```
-/src/main/resources/application.properties
-```
+But **if required**, only edit this file: `/src/main/resources/application.properties`
 
 Use:
 
@@ -535,7 +440,7 @@ The backend will now run on: `http://localhost:5000`
 
 ---
 
-## ▶️ Running the Frontend
+##  Running the Frontend
 
 ### 1️ Navigate to frontend folder
 
@@ -559,7 +464,7 @@ Frontend will run at: `http://localhost:3000`
 
 ---
 
-## 🟢 Final Setup Summary
+## Final Setup Summary
 
 After following the steps:
 
@@ -603,7 +508,7 @@ mvn clean test -Dskip.npm
 
 ### Auth
 
-```bash
+```
 POST /api/auth/login
 POST /api/auth/register
 GET  /api/auth/me
@@ -611,7 +516,7 @@ GET  /api/auth/me
 
 ### Patients
 
-```bash
+```
 GET    /api/patients
 POST   /api/patients
 PUT    /api/patients/{id}
@@ -620,7 +525,7 @@ GET    /api/patients/{id}
 
 ### Doctors
 
-```bash
+```
 GET    /api/doctors
 POST   /api/doctors
 GET    /api/doctors/{id}
@@ -628,7 +533,7 @@ GET    /api/doctors/{id}
 
 ### Appointments
 
-```bash
+```
 POST   /api/appointments
 GET    /api/appointments/patient/{id}
 GET    /api/appointments/doctor/{id}
@@ -636,14 +541,14 @@ GET    /api/appointments/doctor/{id}
 
 ### Prescriptions
 
-```bash
+```
 POST   /api/prescriptions
 GET    /api/prescriptions/patient/{id}
 ```
 
 ### Billing
 
-```bash
+```
 POST  /api/bills
 PUT   /api/bills/{id}/payment
 ```
@@ -665,7 +570,7 @@ Next.js Frontend → REST API → Spring Boot → JPA/Hibernate → MySQL
 
 ---
 
-## 🧭 Future Enhancements
+## Future Enhancements
 
 * Email/SMS appointment reminders
 * AI-driven scheduling optimization
@@ -675,7 +580,7 @@ Next.js Frontend → REST API → Spring Boot → JPA/Hibernate → MySQL
 
 ---
 
-## 🏁 Conclusion
+## Conclusion
 
 HealthSync delivers a fully functional hospital automation system built with modern full-stack architecture. It is modular, scalable, secure, and supported by comprehensive testing and industry-standard patterns.
 
