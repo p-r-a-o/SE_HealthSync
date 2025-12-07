@@ -16,9 +16,10 @@ Pramatha V Rao – IMT2023116
 3. [System Design](#3-system-design)
 4. [Folder Structure](#4-folder-structure)
 5. [Code Overview](#5-code-overview)
-6. [Setup & Installation](#6-setup--installation)
-7. [Conclusion](#7-conclusion)
-
+6. [Conclusion](#6-conclusion)
+7. [Appendix A: API Endpoints](#appendix-a-api-endpoints)
+8. [Appendix B: Database Schema](#appendix-b-database-schema)
+9. [Appendix C: Technology Versions](#appendix-c-technology-versions)
 ---
 
 ## 1. Introduction
@@ -444,10 +445,102 @@ DoctorDTO dto = DoctorDTO.builder()
 
 ### 5.2 Key Code Components
 
-#### -> Entity Classes
-#### -> Repository with Custom Queries
-#### -> Service Layer Logic
-#### -> REST Controller
+#### 5.2.1 Entity Classes
+**Base User Entity:**
+```java
+@Entity
+@Table(name = "users")
+@Inheritance(strategy = InheritanceType.JOINED)
+public class User {
+    @Id
+    private String personId;
+    private String firstName;
+    private String lastName;
+    private String email;
+    // ... other fields
+}
+```
+
+**Specialized Entity:**
+```java
+@Entity
+@Table(name = "patients")
+public class Patient extends User {
+    private String bloodGroup;
+    private LocalDate dateOfBirth;
+    private LocalDate registrationDate;
+    
+    @OneToMany(mappedBy = "patient")
+    private List<Appointment> appointments;
+}
+```
+
+#### 5.2.2 Repository with Custom Queries
+```java
+@Repository
+public interface AppointmentRepository extends JpaRepository<Appointment, String> {
+    
+    @Query("SELECT a FROM Appointment a WHERE a.doctor.personId = :doctorId " +
+           "AND a.appointmentDate = :date " +
+           "AND a.startTime < :endTime AND a.endTime > :startTime")
+    List<Appointment> findConflictingAppointments(
+        @Param("doctorId") String doctorId,
+        @Param("date") LocalDate date,
+        @Param("startTime") LocalTime startTime,
+        @Param("endTime") LocalTime endTime
+    );
+}
+```
+
+#### 5.2.3 Service Layer Logic
+```java
+@Service
+public class AppointmentService {
+    
+    public Appointment bookAppointment(Appointment appointment) {
+        // Check for conflicts
+        List<Appointment> conflicts = appointmentRepository
+            .findConflictingAppointments(
+                appointment.getDoctor().getPersonId(),
+                appointment.getAppointmentDate(),
+                appointment.getStartTime(),
+                appointment.getEndTime()
+            );
+        
+        if (!conflicts.isEmpty()) {
+            throw new ConflictException("Time slot already booked");
+        }
+        
+        return appointmentRepository.save(appointment);
+    }
+}
+```
+
+#### 5.2.4 REST Controller
+```java
+@RestController
+@RequestMapping("/api/appointments")
+public class AppointmentController {
+    
+    @Autowired
+    private AppointmentService appointmentService;
+    
+    @PostMapping
+    public ResponseEntity<AppointmentDTO> createAppointment(
+        @Valid @RequestBody Appointment appointment) {
+        
+        Appointment saved = appointmentService.bookAppointment(appointment);
+        AppointmentDTO dto = DTOMapper.toAppointmentDTO(saved);
+        return ResponseEntity.status(HttpStatus.CREATED).body(dto);
+    }
+    
+    @GetMapping("/{id}")
+    public ResponseEntity<AppointmentDTO> getAppointment(@PathVariable String id) {
+        Appointment appointment = appointmentService.getById(id);
+        return ResponseEntity.ok(DTOMapper.toAppointmentDTO(appointment));
+    }
+}
+```
 
 ### 5.3 Security Implementation
 
@@ -562,7 +655,7 @@ The implementation of multiple design patterns ensures:
 - Database constraint validation
 - API endpoint testing
 
-### 7.4 Security Measures
+### 6.4 Security Measures
 
 **Authentication & Authorization:**
 - JWT-based stateless authentication
@@ -596,7 +689,7 @@ The implementation of multiple design patterns ensures:
 - RESTful API can support mobile applications
 - Database schema can evolve with migrations
 
-### 7.6 System Maintenance
+### 6.6 System Maintenance
 
 **Ongoing Maintenance Requirements:**
 - Regular security updates for dependencies
