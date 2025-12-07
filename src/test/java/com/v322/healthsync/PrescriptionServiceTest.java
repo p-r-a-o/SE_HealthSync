@@ -54,6 +54,7 @@ class PrescriptionServiceTest {
         testDoctor.setPersonId("DOC-001");
 
         testMedication = new Medication();
+        testMedication.setQuantity(50);
         testMedication.setMedicationId("MED-001");
 
         testPrescription = new Prescription();
@@ -68,9 +69,6 @@ class PrescriptionServiceTest {
         testItem.setPrescriptionItemId("ITEM-001");
         testItem.setPrescription(testPrescription);
         testItem.setMedication(testMedication);
-        // testItem.setDosage("500mg");
-        // testItem.setFrequency("Twice daily");
-        // testItem.setDuration("7 days");
     }
 
     // Create Prescription Tests

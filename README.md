@@ -2,6 +2,11 @@
 
 *A full-stack hospital workflow automation system built with Spring Boot + Next.js.*
 
+Submitted by:
+Navaneeth D (IMT2023095)
+R Ricky Roger (IMT2023098)
+Pramatha V Rao (IMT2023116)
+
 ---
 
 ## Overview
@@ -21,6 +26,10 @@ It uses a **Spring Boot backend**, a **Next.js (App Router) frontend**, **MySQL*
 * **Receptionist:** patient registration, appointments, beds, billing
 * **Pharmacist:** prescriptions, medication inventory
 
+### Use-Case Diagram
+
+![Use-Case Diagram](./design_patterns/use_case.png)
+
 ### **Core Modules**
 
 * Patient Management
@@ -35,6 +44,20 @@ It uses a **Spring Boot backend**, a **Next.js (App Router) frontend**, **MySQL*
 * Extensive automated testing
 
 ---
+
+## System Design and Documentation
+
+### 1. Class Diagram
+
+![Class Diagram](./design_patterns/class_diagram.png)
+
+### 2. Activity Diagram
+
+![Activity Diagram](./design_patterns/activity.png)
+
+### 3. Sequence Diagram
+
+![Sequence Diagram](./design_patterns/sequence.png)
 
 ## **Technology Stack**
 
@@ -353,15 +376,9 @@ SE_HealthSync
 * `prescription_item`
 * `users`
 
-Relationships include:
+### Entity Relationship Diagram
 
-* Patient → Appointments (1:N)
-* Doctor → Appointments (1:N)
-* Patient → Prescriptions (1:N)
-* Prescription → Items (1:N)
-* Patient → Bills (1:N)
-* Bed → Patient (1:1)
-* Doctor → Department (N:1)
+![Entity Relationship Diagram](./design_patterns/entity_relationship.png)
 
 ---
 
@@ -440,7 +457,7 @@ The backend will now run on: `http://localhost:5000`
 
 ---
 
-##  Running the Frontend
+## Running the Frontend
 
 ### 1️ Navigate to frontend folder
 

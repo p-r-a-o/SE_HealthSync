@@ -155,50 +155,6 @@ class AppointmentServiceTest {
         verify(appointmentRepository).save(any(Appointment.class));
     }
 
-    // Get Available Slots Tests
-//     @Test
-//     void getAvailableSlots_NoBookedAppointments_ReturnsAllSlots() {
-//         LocalDate date = LocalDate.of(2024, 12, 15);
-//         testAvailability.setStartTime(LocalTime.of(9, 0));
-//         testAvailability.setEndTime(LocalTime.of(10, 0));
-
-//         when(doctorAvailabilityRepository.findByDoctorIdAndDay(anyString(), anyString()))
-//                 .thenReturn(List.of(testAvailability));
-//         when(appointmentRepository.findByDoctorIdAndDate(anyString(), any(LocalDate.class)))
-//                 .thenReturn(Collections.emptyList());
-
-//         List<AppointmentService.TimeSlot> slots = appointmentService.getAvailableSlots("DOC-001", date);
-
-//         assertThat(slots).hasSize(2);
-//         assertThat(slots.get(0).getStartTime()).isEqualTo(LocalTime.of(9, 0));
-//         assertThat(slots.get(0).getEndTime()).isEqualTo(LocalTime.of(9, 30));
-//         assertThat(slots.get(1).getStartTime()).isEqualTo(LocalTime.of(9, 30));
-//         assertThat(slots.get(1).getEndTime()).isEqualTo(LocalTime.of(10, 0));
-//     }
-
-//     @Test
-//     void getAvailableSlots_WithBookedAppointments_ExcludesBookedSlots() {
-//         LocalDate date = LocalDate.of(2024, 12, 15);
-//         testAvailability.setStartTime(LocalTime.of(9, 0));
-//         testAvailability.setEndTime(LocalTime.of(11, 0));
-
-//         Appointment bookedAppointment = new Appointment();
-//         bookedAppointment.setStartTime(LocalTime.of(9, 30));
-//         bookedAppointment.setEndTime(LocalTime.of(10, 0));
-//         bookedAppointment.setStatus("SCHEDULED");
-
-//         when(doctorAvailabilityRepository.findByDoctorIdAndDay(anyString(), anyString()))
-//                 .thenReturn(List.of(testAvailability));
-//         when(appointmentRepository.findByDoctorIdAndDate(anyString(), any(LocalDate.class)))
-//                 .thenReturn(List.of(bookedAppointment));
-
-//         List<AppointmentService.TimeSlot> slots = appointmentService.getAvailableSlots("DOC-001", date);
-
-//         assertThat(slots).hasSize(3);
-//         assertThat(slots).noneMatch(slot -> 
-//             slot.getStartTime().equals(LocalTime.of(9, 30)));
-//     }
-
     @Test
     void getAvailableSlots_CancelledAppointments_IncludesThoseSlots() {
         LocalDate date = LocalDate.of(2024, 12, 15);
