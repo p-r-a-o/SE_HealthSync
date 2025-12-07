@@ -264,25 +264,25 @@ HealthSync follows a **3-tier architecture** with clear separation of concerns:
 
 ### 3.1 Use Case Diagrams
 
-![Use-Case Diagram](./design_patterns/use_case.png)
+![Use-Case Diagram](./assets/use_case.png)
 
 
 ### 3.2 Activity Diagrams
 
-![Activity Diagram](./design_patterns/activity.png)
+![Activity Diagram](./assets/activity.png)
 
 
 ### 3.3 Class Diagram
 
-![Class Diagram](./design_patterns/class_diagram.png)
+![Class Diagram](./assets/class_diagram.png)
 
 ### 3.4 Sequence Diagrams
 
-![Sequence Diagram](./design_patterns/sequence.png)
+![Sequence Diagram](./assets/sequence.png)
 
 ### 3.5 Entity Relationship Diagrams
 
-![Entity Relationship Diagram](./design_patterns/entity_relationship.png)
+![Entity Relationship Diagram](./assets/entity_relationship.png)
 
 ---
 

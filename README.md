@@ -26,10 +26,6 @@ It uses a **Spring Boot backend**, a **Next.js (App Router) frontend**, **MySQL*
 * **Receptionist:** patient registration, appointments, beds, billing
 * **Pharmacist:** prescriptions, medication inventory
 
-### Use-Case Diagram
-
-![Use-Case Diagram](./design_patterns/use_case.png)
-
 ### **Core Modules**
 
 * Patient Management
@@ -44,20 +40,6 @@ It uses a **Spring Boot backend**, a **Next.js (App Router) frontend**, **MySQL*
 * Extensive automated testing
 
 ---
-
-## System Design and Documentation
-
-### 1. Class Diagram
-
-![Class Diagram](./design_patterns/class_diagram.png)
-
-### 2. Activity Diagram
-
-![Activity Diagram](./design_patterns/activity.png)
-
-### 3. Sequence Diagram
-
-![Sequence Diagram](./design_patterns/sequence.png)
 
 ## **Technology Stack**
 
@@ -375,10 +357,6 @@ SE_HealthSync
 * `prescription`
 * `prescription_item`
 * `users`
-
-### Entity Relationship Diagram
-
-![Entity Relationship Diagram](./design_patterns/entity_relationship.png)
 
 ---
 
