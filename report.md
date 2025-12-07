@@ -1,12 +1,13 @@
 # HealthSync - Hospital Management System
 ## Software Engineering Project Report
 
-**Version 1.0**
 
-**Prepared by:** [Team Members]  
-**Submitted to:** [Instructor Name]  
-**Date:** December 7, 2025
+**Submitted by Team V322:**
+**Navaneeth D    - IMT2023095**
+**R Ricky Roger  - IMT2023098**
+**Pramatha V Rao - IMT2023116**
 
+**[ReadMe here](./README.md)**
 ---
 
 ## Contents
@@ -1023,19 +1024,6 @@ PUT    /api/bills/{id}/payment  - Record payment
 **REST** - Representational State Transfer  
 **RBAC** - Role-Based Access Control  
 **ACID** - Atomicity, Consistency, Isolation, Durability  
-
----
-
-## References
-
-1. Spring Framework Documentation. (2024). https://spring.io/projects/spring-boot
-2. React Documentation. (2024). https://react.dev/
-3. MySQL 8.0 Reference Manual. Oracle Corporation.
-4. Fowler, M. (2002). Patterns of Enterprise Application Architecture. Addison-Wesley.
-5. Gamma, E., Helm, R., Johnson, R., & Vlissides, J. (1994). Design Patterns: Elements of Reusable Object-Oriented Software. Addison-Wesley.
-6. IEEE Std 830-1998. IEEE Recommended Practice for Software Requirements Specifications.
-7. Richardson, C. (2018). Microservices Patterns. Manning Publications.
-8. JWT Best Practices. RFC 8725. https://tools.ietf.org/html/rfc8725
 
 ---
 
