@@ -2,10 +2,10 @@
 
 *A full-stack hospital workflow automation system built with Spring Boot + Next.js.*
 
-**Submitted by Team V322:**
-**Navaneeth D    - IMT2023095**
-**R Ricky Roger  - IMT2023098**
-**Pramatha V Rao - IMT2023116**
+<b>Submitted by Team V322</b><br>
+Navaneeth D – IMT2023095<br>
+R Ricky Roger – IMT2023098<br>
+Pramatha V Rao – IMT2023116
 
 ### **[Report here](./report.md)**
 
