@@ -2,9 +2,12 @@ package com.v322.healthsync.controller;
 
 import com.v322.healthsync.entity.User;
 import com.v322.healthsync.entity.Patient;
+import com.v322.healthsync.dto.PatientRegisterDTO;
 import com.v322.healthsync.service.AuthService;
 import com.v322.healthsync.service.PatientService;
+import com.v322.healthsync.dto.EntityMapper;
 import com.v322.healthsync.security.JwtService;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,6 +29,12 @@ public class AuthController {
 
     @Autowired
     private JwtService jwtService;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private EntityMapper entityMapper;
 
     /**
      * Login endpoint
@@ -77,7 +86,7 @@ public class AuthController {
      * Request body: Patient object with all required fields
      */
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody Patient patient) {
+    public ResponseEntity<?> register(@RequestBody PatientRegisterDTO patient) {
         try {
             // Validate input
             if (patient.getEmail() == null || patient.getPassword() == null) {
@@ -94,9 +103,10 @@ public class AuthController {
 
             // Set registration date
             patient.setRegistrationDate(LocalDate.now());
+            
 
             // Register patient (password will be hashed in service)
-            Patient registeredPatient = authService.registerPatient(patient);
+            Patient registeredPatient = authService.registerPatient(entityMapper.toPatientEntity(patient));
 
             // Generate JWT token
             String jwt = jwtService.generateToken(

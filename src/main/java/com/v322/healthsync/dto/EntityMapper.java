@@ -55,6 +55,25 @@ public class EntityMapper {
         patient.setNotes(dto.getNotes());
         return patient;
     }
+
+    public Patient toPatientEntity(PatientRegisterDTO dto) {
+        if (dto == null) return null;
+        
+        Patient patient = new Patient();
+        patient.setPersonId(dto.getPersonId());
+        patient.setFirstName(dto.getFirstName());
+        patient.setLastName(dto.getLastName());
+        patient.setDateOfBirth(dto.getDateOfBirth());
+        patient.setGender(dto.getGender());
+        patient.setBloodGroup(dto.getBloodGroup());
+        patient.setContactNumber(dto.getContactNumber());
+        patient.setEmail(dto.getEmail());
+        patient.setCity(dto.getCity());
+        patient.setRegistrationDate(LocalDate.now());
+        patient.setNotes(dto.getNotes());
+        patient.setPassword(dto.getPassword());
+        return patient;
+    }
     
     public Receptionist toReceptionistEntity(ReceptionistDTO dto) {
         if (dto == null) return null;

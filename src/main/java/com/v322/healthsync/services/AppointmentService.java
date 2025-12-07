@@ -92,10 +92,12 @@ public class AppointmentService {
                 
                 boolean isAvailable = true;
                 for (Appointment appointment : bookedAppointments) {
-                    if (!(slotEnd.isBefore(appointment.getStartTime()) || 
-                          currentTime.isAfter(appointment.getEndTime()))) {
-                        isAvailable = false;
-                        break;
+                    if (!appointment.getStatus().equals("CANCELLED")){
+                        if (!(slotEnd.isBefore(appointment.getStartTime()) || 
+                            currentTime.isAfter(appointment.getEndTime()))) {
+                            isAvailable = false;
+                            break;
+                        }
                     }
                 }
 

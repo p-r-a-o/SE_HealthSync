@@ -127,6 +127,9 @@ public class DoctorService {
         if (updatedDoctor.getDepartment() != null) {
             existingDoctor.setDepartment(updatedDoctor.getDepartment());
         }
+        if (updatedDoctor.getConsultationFee() != null) {
+            existingDoctor.setConsultationFee(updatedDoctor.getConsultationFee());
+        }
 
         return doctorRepository.save(existingDoctor);
     }

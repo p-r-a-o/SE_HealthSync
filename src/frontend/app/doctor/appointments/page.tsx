@@ -19,6 +19,16 @@ export default function DoctorAppointmentsPage() {
   })
 
   useEffect(() => {
+    if (selectedAppointment) {
+      setConsultationData({
+        diagnosis: selectedAppointment.diagnosis,
+        treatmentPlan: selectedAppointment.treatmentPlan,
+        notes: selectedAppointment.notes,
+      })
+    }
+  }, [selectedAppointment])
+
+  useEffect(() => {
     const fetchAppointments = async () => {
       try {
         const response = await api.get(`/appointments/doctor/${user?.userId}`)
@@ -80,7 +90,7 @@ export default function DoctorAppointmentsPage() {
                       ? "ring-2 ring-blue-500"
                       : "hover:shadow-md"
                   }`}
-                  onClick={() => setSelectedAppointment(apt)}
+                  onClick={() => {if (apt.status!="CANCELLED") {setSelectedAppointment(apt)}}}
                 >
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>

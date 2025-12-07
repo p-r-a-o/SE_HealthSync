@@ -2,6 +2,7 @@ package com.v322.healthsync.service;
 
 import com.v322.healthsync.entity.*;
 import com.v322.healthsync.repository.*;
+import com.v322.healthsync.dto.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +25,7 @@ public class PatientService {
     
     @Autowired
     private BillRepository billRepository;
+
 
     // FR-1: Patient Registration
     public Patient registerPatient(Patient patient) {
@@ -83,6 +85,15 @@ public class PatientService {
         
         return new MedicalHistory(patient, appointments, prescriptions, bills);
     }
+    // FR-2: View Medical HistoryDTO
+    public MedicalHistoryDTO getMedicalHistoryDTO(String patientId) {
+        Patient patient = getPatientById(patientId);
+        List<Appointment> appointments = appointmentRepository.findByPatientId(patientId);
+        List<Prescription> prescriptions = prescriptionRepository.findByPatientId(patientId);
+        List<Bill> bills = billRepository.findByPatientId(patientId);
+        
+        return new MedicalHistoryDTO(patient, appointments, prescriptions, bills);
+    }
 
     public void deletePatient(String patientId) {
         patientRepository.deleteById(patientId);
@@ -108,5 +119,28 @@ public class PatientService {
         public List<Appointment> getAppointments() { return appointments; }
         public List<Prescription> getPrescriptions() { return prescriptions; }
         public List<Bill> getBills() { return bills; }
+    }
+
+    // Inner class for medical history response
+    public static class MedicalHistoryDTO {
+        private PatientDTO patient;
+        private List<AppointmentDTO> appointments;
+        private List<PrescriptionDTO> prescriptions;
+        private List<BillDTO> bills;
+
+
+        public MedicalHistoryDTO(Patient patient, List<Appointment> appointments, 
+                            List<Prescription> prescriptions, List<Bill> bills) {
+            this.patient = dtoMapper.toPatientDTO(patient);
+            this.appointments = appointments.stream().map(DTOMapper::toAppointmentDTO).toList();
+            this.prescriptions = prescriptions.stream().map(DTOMapper::toPrescriptionDTO).toList();
+            this.bills = bills.stream().map(DTOMapper::toBillDTO).toList();
+        }
+
+        // Getters
+        public PatientDTO getPatient() { return patient; }
+        public List<AppointmentDTO> getAppointments() { return appointments; }
+        public List<PrescriptionDTO> getPrescriptions() { return prescriptions; }
+        public List<BillDTO> getBills() { return bills; }
     }
 }

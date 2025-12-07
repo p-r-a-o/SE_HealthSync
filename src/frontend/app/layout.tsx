@@ -4,14 +4,13 @@ import { Geist, Geist_Mono } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
 import { AuthProvider } from "@/lib/auth-context"
-
+import  Navbar from "@/components/navbar"
 const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: "HealthSync - Hospital Management System",
   description: "Complete hospital management system for patients, doctors, and staff",
-  generator: "v0.app",
   icons: {
     icon: [
       {
@@ -46,19 +45,5 @@ export default function RootLayout({
         <Analytics />
       </body>
     </html>
-  )
-}
-
-import Link from "next/link"
-
-function Navbar() {
-  return (
-    <nav className="bg-blue-600 text-white p-4">
-      <div className="container mx-auto flex justify-between items-center">
-        <Link href="/" className="text-2xl font-bold">
-          HealthSync
-        </Link>
-      </div>
-    </nav>
   )
 }

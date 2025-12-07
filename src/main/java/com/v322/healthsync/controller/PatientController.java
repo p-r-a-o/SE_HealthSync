@@ -111,9 +111,9 @@ public class PatientController {
 
     // FR-2: View Medical History
     @GetMapping("/{patientId}/medical-history")
-    public ResponseEntity<PatientService.MedicalHistory> getMedicalHistory(@PathVariable String patientId) {
+    public ResponseEntity<PatientService.MedicalHistoryDTO> getMedicalHistory(@PathVariable String patientId) {
         try {
-            PatientService.MedicalHistory history = patientService.getMedicalHistory(patientId);
+            PatientService.MedicalHistoryDTO history = patientService.getMedicalHistoryDTO(patientId);
             return new ResponseEntity<>(history, HttpStatus.OK);
         } catch (RuntimeException e) {
             return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);

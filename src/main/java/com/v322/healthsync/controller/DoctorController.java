@@ -114,6 +114,7 @@ public class DoctorController {
             @PathVariable String doctorId,
             @RequestBody DoctorAvailabilityDTO availability) {
         try {
+            availability.setDoctorId(doctorId);
             DoctorAvailability createdAvailability = doctorService.addDoctorAvailability(entityMapper.toDoctorAvailabilityEntity(availability));
             return new ResponseEntity<>(DTOMapper.toDoctorAvailabilityDTO(createdAvailability), HttpStatus.CREATED);
         } catch (Exception e) {
