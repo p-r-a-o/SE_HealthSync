@@ -25,52 +25,54 @@ class PharmacyController {
     private EntityMapper entityMapper;
 
     @PostMapping
-    public ResponseEntity<Pharmacy> createPharmacy(@RequestBody PharmacyDTO pharmacy) {
+    public ResponseEntity<PharmacyDTO> createPharmacy(@RequestBody PharmacyDTO pharmacy) {
         try {
             Pharmacy createdPharmacy = pharmacyService.createPharmacy(entityMapper.toPharmacyEntity(pharmacy));
-            return new ResponseEntity<>(createdPharmacy, HttpStatus.CREATED);
+            return new ResponseEntity<>(DTOMapper.toPharmacyDTO(createdPharmacy), HttpStatus.CREATED);
         } catch (Exception e) {
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @GetMapping("/{pharmacyId}")
-    public ResponseEntity<Pharmacy> getPharmacyById(@PathVariable String pharmacyId) {
+    public ResponseEntity<PharmacyDTO> getPharmacyById(@PathVariable String pharmacyId) {
         try {
             Pharmacy pharmacy = pharmacyService.getPharmacyById(pharmacyId);
-            return new ResponseEntity<>(pharmacy, HttpStatus.OK);
+            return new ResponseEntity<>(DTOMapper.toPharmacyDTO(pharmacy), HttpStatus.OK);
         } catch (RuntimeException e) {
             return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
         }
     }
 
     @GetMapping
-    public ResponseEntity<List<Pharmacy>> getAllPharmacies() {
+    public ResponseEntity<List<PharmacyDTO>> getAllPharmacies() {
         try {
             List<Pharmacy> pharmacies = pharmacyService.getAllPharmacies();
-            return new ResponseEntity<>(pharmacies, HttpStatus.OK);
+            List<PharmacyDTO> responseList = pharmacies.stream().map(DTOMapper::toPharmacyDTO).toList();
+            return new ResponseEntity<>(responseList, HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @GetMapping("/location/{location}")
-    public ResponseEntity<List<Pharmacy>> getPharmaciesByLocation(@PathVariable String location) {
+    public ResponseEntity<List<PharmacyDTO>> getPharmaciesByLocation(@PathVariable String location) {
         try {
             List<Pharmacy> pharmacies = pharmacyService.getPharmaciesByLocation(location);
-            return new ResponseEntity<>(pharmacies, HttpStatus.OK);
+            List<PharmacyDTO> responseList = pharmacies.stream().map(DTOMapper::toPharmacyDTO).toList();
+            return new ResponseEntity<>(responseList, HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @PutMapping("/{pharmacyId}")
-    public ResponseEntity<Pharmacy> updatePharmacy(
+    public ResponseEntity<PharmacyDTO> updatePharmacy(
             @PathVariable String pharmacyId,
             @RequestBody PharmacyDTO pharmacy) {
         try {
             Pharmacy updatedPharmacy = pharmacyService.updatePharmacy(pharmacyId, entityMapper.toPharmacyEntity(pharmacy));
-            return new ResponseEntity<>(updatedPharmacy, HttpStatus.OK);
+            return new ResponseEntity<>(DTOMapper.toPharmacyDTO(updatedPharmacy), HttpStatus.OK);
         } catch (RuntimeException e) {
             return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
         } catch (Exception e) {

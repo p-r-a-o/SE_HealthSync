@@ -39,9 +39,10 @@ public class PrescriptionController {
     public ResponseEntity<PrescriptionDTO> createPrescriptionWithItems(
             @RequestBody PrescriptionRequest request) {
         try {
-            Prescription prescription = prescriptionService.createPrescriptionWithItems(request.getPrescription(), request.getItems());
+            Prescription prescription = prescriptionService.createPrescriptionWithItems(request.getPrescription(entityMapper), request.getItems(entityMapper));
             return new ResponseEntity<>(DTOMapper.toPrescriptionDTO(prescription), HttpStatus.CREATED);
         } catch (Exception e) {
+            System.out.println(e.getMessage());
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -178,12 +179,9 @@ public class PrescriptionController {
         private PrescriptionDTO prescription;
         private List<PrescriptionItemDTO> items;
 
-        @Autowired
-        private EntityMapper entityMapper;
-
-        public Prescription getPrescription() { return entityMapper.toPrescriptionEntity(prescription); }
+        public Prescription getPrescription(EntityMapper entityMapper) { return entityMapper.toPrescriptionEntity(prescription); }
         public void setPrescription(PrescriptionDTO prescription) { this.prescription = prescription; }
-        public List<PrescriptionItem> getItems() { List<PrescriptionItem> requestList = items.stream().map(entityMapper::toPrescriptionItemEntity).collect(Collectors.toList()); return requestList; }
+        public List<PrescriptionItem> getItems(EntityMapper entityMapper) { List<PrescriptionItem> requestList = items.stream().map(entityMapper::toPrescriptionItemEntity).collect(Collectors.toList()); return requestList; }
         public void setItems(List<PrescriptionItemDTO> items) { this.items = items; }
     }
 }

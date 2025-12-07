@@ -14,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.util.HashMap;
+import java.util.UUID;
 import java.util.Map;
 
 @RestController
@@ -103,7 +104,7 @@ public class AuthController {
 
             // Set registration date
             patient.setRegistrationDate(LocalDate.now());
-            
+            patient.setPersonId("PAT-"+UUID.randomUUID().toString());
 
             // Register patient (password will be hashed in service)
             Patient registeredPatient = authService.registerPatient(entityMapper.toPatientEntity(patient));

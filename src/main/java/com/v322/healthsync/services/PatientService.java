@@ -131,7 +131,7 @@ public class PatientService {
 
         public MedicalHistoryDTO(Patient patient, List<Appointment> appointments, 
                             List<Prescription> prescriptions, List<Bill> bills) {
-            this.patient = dtoMapper.toPatientDTO(patient);
+            this.patient = DTOMapper.toPatientDTO(patient);
             this.appointments = appointments.stream().map(DTOMapper::toAppointmentDTO).toList();
             this.prescriptions = prescriptions.stream().map(DTOMapper::toPrescriptionDTO).toList();
             this.bills = bills.stream().map(DTOMapper::toBillDTO).toList();
