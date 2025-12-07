@@ -23,7 +23,7 @@
 ## 1. Introduction
 
 ### 1.1 Purpose
-The purpose of this document is to define comprehensive requirements and architectural details for the **HealthSync Hospital Management System**. This project aims to develop a robust, efficient, and scalable healthcare management platform that leverages Spring Boot and React to seamlessly integrate with a MySQL database. The system streamlines hospital operations including patient management, appointment scheduling, prescription handling, billing, pharmacy operations, and bed allocation. By defining clear functional and non-functional requirements, this document serves as a foundation for development, ensuring alignment with healthcare operational needs and enhanced user experience for administrators, doctors, patients, and support staff.
+The purpose of this document is to define comprehensive requirements and architectural details for the **HealthSync Hospital Management System**. This project aims to develop a robust, efficient, and scalable healthcare management platform that leverages Spring Boot and React to seamlessly integrate with a MySQL database. The system streamlines hospital operations including patient management, appointment scheduling, prescription handling, billing, pharmacy operations, and bed allocation.
 
 ### 1.2 Document Conventions
 - Headings are in bold and follow hierarchical numbering
@@ -711,84 +711,8 @@ public interface PatientRepository extends JpaRepository<Patient, String> {
 - Consistent data access patterns
 - Query method generation
 
-**Usage Example:**
-```java
-@Service
-public class PatientService {
-    @Autowired
-    private PatientRepository patientRepository;
-    
-    public Patient getPatientByEmail(String email) {
-        return patientRepository.findByEmail(email);
-    }
-}
-```
 
-#### 5.1.2 Data Transfer Object (DTO) Pattern
-**Purpose**: Transfer data between layers without exposing internal structure
-
-**Implementation:**
-```java
-public class AppointmentDTO {
-    private String appointmentId;
-    private String patientName;      // Denormalized
-    private String doctorName;       // Denormalized
-    private LocalDate appointmentDate;
-    private String status;
-    // Getters and setters
-}
-```
-
-**Conversion with Mapper:**
-```java
-public class DTOMapper {
-    public static AppointmentDTO toAppointmentDTO(Appointment appointment) {
-        AppointmentDTO dto = new AppointmentDTO();
-        dto.setAppointmentId(appointment.getAppointmentId());
-        dto.setPatientName(appointment.getPatient().getFirstName() + " " + 
-                          appointment.getPatient().getLastName());
-        dto.setDoctorName("Dr. " + appointment.getDoctor().getFirstName() + " " + 
-                         appointment.getDoctor().getLastName());
-        return dto;
-    }
-}
-```
-
-**Benefits:**
-- Prevents JSON circular reference errors
-- Reduces payload size
-- Hides sensitive entity information
-- Version control for APIs
-
-#### 5.1.3 Dependency Injection (DI) Pattern
-**Purpose**: Achieve loose coupling through inversion of control
-
-**Implementation:**
-```java
-@Service
-public class AppointmentService {
-    private final AppointmentRepository appointmentRepository;
-    private final DoctorRepository doctorRepository;
-    private final PatientRepository patientRepository;
-    
-    @Autowired
-    public AppointmentService(
-        AppointmentRepository appointmentRepository,
-        DoctorRepository doctorRepository,
-        PatientRepository patientRepository) {
-        this.appointmentRepository = appointmentRepository;
-        this.doctorRepository = doctorRepository;
-        this.patientRepository = patientRepository;
-    }
-}
-```
-
-**Benefits:**
-- Testability (easy to inject mocks)
-- Spring manages bean lifecycle
-- Configuration flexibility
-
-#### 5.1.4 Builder Pattern
+#### 5.1.2 Builder Pattern
 **Purpose**: Construct complex objects step by step
 
 **Implementation (via Lombok):**
@@ -820,22 +744,15 @@ DoctorDTO dto = DoctorDTO.builder()
 - Optional parameters
 - Immutability support
 
-#### 5.1.5 Singleton Pattern
+#### 5.1.3 Singleton Pattern
 **Purpose**: Ensure single instance of services
 
 **Implementation:**
 - Spring beans are singleton-scoped by default
 - Single instance per application context
 
-**Example:**
-```java
-@Service  // Singleton by default
-public class BillingService {
-    // Only one instance exists
-}
-```
 
-#### 5.1.6 Layered Architecture Pattern
+#### 5.1.4 Layered Architecture Pattern
 **Purpose**: Organize code into logical layers with clear boundaries
 
 **Layers:**
@@ -844,112 +761,13 @@ public class BillingService {
 3. **Data Access Layer**: Repositories
 4. **Domain Layer**: Entities
 
-**Data Flow:**
-```
-Controller → Service → Repository → Database
-    ↓          ↓          ↓
-   DTO      Business    Entity
-           Validation
-```
 
 ### 5.2 Key Code Components
 
-#### 5.2.1 Entity Classes
-**Base User Entity:**
-```java
-@Entity
-@Table(name = "users")
-@Inheritance(strategy = InheritanceType.JOINED)
-public class User {
-    @Id
-    private String personId;
-    private String firstName;
-    private String lastName;
-    private String email;
-    // ... other fields
-}
-```
-
-**Specialized Entity:**
-```java
-@Entity
-@Table(name = "patients")
-public class Patient extends User {
-    private String bloodGroup;
-    private LocalDate dateOfBirth;
-    private LocalDate registrationDate;
-    
-    @OneToMany(mappedBy = "patient")
-    private List<Appointment> appointments;
-}
-```
-
-#### 5.2.2 Repository with Custom Queries
-```java
-@Repository
-public interface AppointmentRepository extends JpaRepository<Appointment, String> {
-    
-    @Query("SELECT a FROM Appointment a WHERE a.doctor.personId = :doctorId " +
-           "AND a.appointmentDate = :date " +
-           "AND a.startTime < :endTime AND a.endTime > :startTime")
-    List<Appointment> findConflictingAppointments(
-        @Param("doctorId") String doctorId,
-        @Param("date") LocalDate date,
-        @Param("startTime") LocalTime startTime,
-        @Param("endTime") LocalTime endTime
-    );
-}
-```
-
-#### 5.2.3 Service Layer Logic
-```java
-@Service
-public class AppointmentService {
-    
-    public Appointment bookAppointment(Appointment appointment) {
-        // Check for conflicts
-        List<Appointment> conflicts = appointmentRepository
-            .findConflictingAppointments(
-                appointment.getDoctor().getPersonId(),
-                appointment.getAppointmentDate(),
-                appointment.getStartTime(),
-                appointment.getEndTime()
-            );
-        
-        if (!conflicts.isEmpty()) {
-            throw new ConflictException("Time slot already booked");
-        }
-        
-        return appointmentRepository.save(appointment);
-    }
-}
-```
-
-#### 5.2.4 REST Controller
-```java
-@RestController
-@RequestMapping("/api/appointments")
-public class AppointmentController {
-    
-    @Autowired
-    private AppointmentService appointmentService;
-    
-    @PostMapping
-    public ResponseEntity<AppointmentDTO> createAppointment(
-        @Valid @RequestBody Appointment appointment) {
-        
-        Appointment saved = appointmentService.bookAppointment(appointment);
-        AppointmentDTO dto = DTOMapper.toAppointmentDTO(saved);
-        return ResponseEntity.status(HttpStatus.CREATED).body(dto);
-    }
-    
-    @GetMapping("/{id}")
-    public ResponseEntity<AppointmentDTO> getAppointment(@PathVariable String id) {
-        Appointment appointment = appointmentService.getById(id);
-        return ResponseEntity.ok(DTOMapper.toAppointmentDTO(appointment));
-    }
-}
-```
+#### -> Entity Classes
+#### -> Repository with Custom Queries
+#### -> Service Layer Logic
+#### -> REST Controller
 
 ### 5.3 Security Implementation
 
