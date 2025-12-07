@@ -297,277 +297,9 @@ HealthSync follows a **3-tier architecture** with clear separation of concerns:
 
 ## 4. Folder Structure
 
-### 4.1 Project Organization
+### 4.1 Component Responsibilities
 
-The HealthSync project follows a modular folder structure with clear separation between backend (Spring Boot) and frontend (React):
-
-```bash
-SE_HealthSync
-├── application.properties
-├── mvnw
-├── mvnw.cmd
-├── node
-│   ├── node
-│   ├── npm
-│   ├── npm.cmd
-│   ├── npx
-│   └── npx.cmd
-├── pom.xml
-├── README.md
-└── src
-    ├── frontend
-    │   ├── app
-    │   │   ├── auth
-    │   │   │   ├── login
-    │   │   │   │   └── page.tsx
-    │   │   │   └── register
-    │   │   │       └── page.tsx
-    │   │   ├── doctor
-    │   │   │   ├── appointments
-    │   │   │   │   └── page.tsx
-    │   │   │   ├── availability
-    │   │   │   │   └── page.tsx
-    │   │   │   ├── patients
-    │   │   │   │   └── page.tsx
-    │   │   │   ├── prescriptions
-    │   │   │   │   └── page.tsx
-    │   │   │   └── profile
-    │   │   │       └── page.tsx
-    │   │   ├── globals.css
-    │   │   ├── layout.tsx
-    │   │   ├── page.tsx
-    │   │   ├── patient
-    │   │   │   ├── appointments
-    │   │   │   │   ├── book
-    │   │   │   │   │   └── page.tsx
-    │   │   │   │   └── page.tsx
-    │   │   │   ├── bills
-    │   │   │   │   └── page.tsx
-    │   │   │   ├── medical-history
-    │   │   │   │   └── page.tsx
-    │   │   │   ├── prescriptions
-    │   │   │   │   └── page.tsx
-    │   │   │   └── profile
-    │   │   │       └── page.tsx
-    │   │   ├── pharmacist
-    │   │   │   ├── inventory
-    │   │   │   │   └── page.tsx
-    │   │   │   └── prescriptions
-    │   │   │       └── page.tsx
-    │   │   └── receptionist
-    │   │       ├── appointments
-    │   │       │   ├── book
-    │   │       │   │   └── page.tsx
-    │   │       │   └── page.tsx
-    │   │       ├── beds
-    │   │       │   └── page.tsx
-    │   │       ├── bills
-    │   │       │   └── page.tsx
-    │   │       └── patients
-    │   │           └── page.tsx
-    │   ├── components
-    │   │   ├── bill-modal.tsx
-    │   │   ├── medication-modal.tsx
-    │   │   ├── navbar.tsx
-    │   │   ├── navbar.tsx
-    │   │   ├── theme-provider.tsx
-    │   │   ├── theme-provider.tsx
-    │   │   └── ui
-    │   │       ├── accordion.tsx
-    │   │       ├── alert-dialog.tsx
-    │   │       ├── alert.tsx
-    │   │       ├── aspect-ratio.tsx
-    │   │       ├── avatar.tsx
-    │   │       ├── badge.tsx
-    │   │       ├── breadcrumb.tsx
-    │   │       ├── button-group.tsx
-    │   │       ├── button.tsx
-    │   │       ├── calendar.tsx
-    │   │       ├── card.tsx
-    │   │       ├── carousel.tsx
-    │   │       ├── chart.tsx
-    │   │       ├── checkbox.tsx
-    │   │       ├── collapsible.tsx
-    │   │       ├── command.tsx
-    │   │       ├── context-menu.tsx
-    │   │       ├── dialog.tsx
-    │   │       ├── drawer.tsx
-    │   │       ├── dropdown-menu.tsx
-    │   │       ├── empty.tsx
-    │   │       ├── field.tsx
-    │   │       ├── form.tsx
-    │   │       ├── hover-card.tsx
-    │   │       ├── input-group.tsx
-    │   │       ├── input-otp.tsx
-    │   │       ├── input.tsx
-    │   │       ├── item.tsx
-    │   │       ├── kbd.tsx
-    │   │       ├── label.tsx
-    │   │       ├── menubar.tsx
-    │   │       ├── navigation-menu.tsx
-    │   │       ├── pagination.tsx
-    │   │       ├── popover.tsx
-    │   │       ├── progress.tsx
-    │   │       ├── radio-group.tsx
-    │   │       ├── resizable.tsx
-    │   │       ├── scroll-area.tsx
-    │   │       ├── select.tsx
-    │   │       ├── separator.tsx
-    │   │       ├── sheet.tsx
-    │   │       ├── sidebar.tsx
-    │   │       ├── skeleton.tsx
-    │   │       ├── slider.tsx
-    │   │       ├── sonner.tsx
-    │   │       ├── spinner.tsx
-    │   │       ├── switch.tsx
-    │   │       ├── table.tsx
-    │   │       ├── tabs.tsx
-    │   │       ├── textarea.tsx
-    │   │       ├── toaster.tsx
-    │   │       ├── toast.tsx
-    │   │       ├── toggle-group.tsx
-    │   │       ├── toggle.tsx
-    │   │       ├── tooltip.tsx
-    │   │       ├── use-mobile.tsx
-    │   │       └── use-toast.ts
-    │   ├── components.json
-    │   ├── hooks
-    │   │   ├── use-mobile.ts
-    │   │   └── use-toast.ts
-    │   ├── lib
-    │   │   ├── api.ts
-    │   │   ├── auth-context.tsx
-    │   │   └── utils.ts
-    │   ├── next.config.mjs
-    │   ├── next-env.d.ts
-    │   ├── package.json
-    │   ├── package-lock.json
-    │   ├── pnpm-lock.yaml
-    │   ├── postcss.config.mjs
-    │   ├── styles
-    │   │   └── globals.css
-    │   └── tsconfig.json
-    ├── main
-    │   ├── java
-    │   │   └── com
-    │   │       └── v322
-    │   │           └── healthsync
-    │   │               ├── config
-    │   │               │   └── DataInitializer.java
-    │   │               ├── controller
-    │   │               │   ├── AppointmentController.java
-    │   │               │   ├── AuthController.java
-    │   │               │   ├── BedController.java
-    │   │               │   ├── BillingController.java
-    │   │               │   ├── DepartmentController.java
-    │   │               │   ├── DoctorController.java
-    │   │               │   ├── HTMLController.java
-    │   │               │   ├── IndexController.java
-    │   │               │   ├── MedicationController.java
-    │   │               │   ├── PatientController.java
-    │   │               │   ├── PharmacistController.java
-    │   │               │   ├── PharmacyController.java
-    │   │               │   ├── PrescriptionController.java
-    │   │               │   ├── ReceptionistController.java
-    │   │               │   └── TestController.java
-    │   │               ├── dto
-    │   │               │   ├── AppointmentDTO.java
-    │   │               │   ├── BedDTO.java
-    │   │               │   ├── BillDTO.java
-    │   │               │   ├── BillItemDTO.java
-    │   │               │   ├── DepartmentDTO.java
-    │   │               │   ├── DoctorAvailabilityDTO.java
-    │   │               │   ├── DoctorDTO.java
-    │   │               │   ├── DTOMapper.java
-    │   │               │   ├── EntityMapper.java
-    │   │               │   ├── MedicationDTO.java
-    │   │               │   ├── PatientDTO.java
-    │   │               │   ├── PatientRegisterDTO.java
-    │   │               │   ├── PharmacistDTO.java
-    │   │               │   ├── PharmacyDTO.java
-    │   │               │   ├── PrescriptionDTO.java
-    │   │               │   ├── PrescriptionItemDTO.java
-    │   │               │   └── ReceptionistDTO.java
-    │   │               ├── entity
-    │   │               │   ├── Appointment.java
-    │   │               │   ├── Bed.java
-    │   │               │   ├── BillItem.java
-    │   │               │   ├── Bill.java
-    │   │               │   ├── Department.java
-    │   │               │   ├── DoctorAvailability.java
-    │   │               │   ├── Doctor.java
-    │   │               │   ├── Error.java
-    │   │               │   ├── Medication.java
-    │   │               │   ├── Patient.java
-    │   │               │   ├── Pharmacist.java
-    │   │               │   ├── Pharmacy.java
-    │   │               │   ├── PrescriptionItem.java
-    │   │               │   ├── Prescription.java
-    │   │               │   ├── Receptionist.java
-    │   │               │   └── User.java
-    │   │               ├── HospitalApplication.java
-    │   │               ├── repository
-    │   │               │   ├── AppointmentRepository.java
-    │   │               │   ├── BedRepository.java
-    │   │               │   ├── BillItemRepository.java
-    │   │               │   ├── BillRepository.java
-    │   │               │   ├── DepartmentRepository.java
-    │   │               │   ├── DoctorAvailabilityRepository.java
-    │   │               │   ├── DoctorRepository.java
-    │   │               │   ├── MedicationRepository.java
-    │   │               │   ├── PatientRepository.java
-    │   │               │   ├── PharmacistRepository.java
-    │   │               │   ├── PharmacyRepository.java
-    │   │               │   ├── PrescriptionItemRepository.java
-    │   │               │   ├── PrescriptionRepository.java
-    │   │               │   ├── ReceptionistRepository.java
-    │   │               │   └── UserRepository.java
-    │   │               ├── security
-    │   │               │   ├── JwtAuthenticationFilter.java
-    │   │               │   ├── SecurityConfig.java
-    │   │               │   └── WebConfiguration.java
-    │   │               └── service
-    │   │                   ├── AppointmentService.java
-    │   │                   ├── AuthService.java
-    │   │                   ├── BedService.java
-    │   │                   ├── BillingService.java
-    │   │                   ├── DepartmentService.java
-    │   │                   ├── DoctorService.java
-    │   │                   ├── JwtService.java
-    │   │                   ├── MedicationService.java
-    │   │                   ├── PatientService.java
-    │   │                   ├── PharmacistService.java
-    │   │                   ├── PharmacyService.java
-    │   │                   ├── PrescriptionService.java
-    │   │                   ├── ReceptionistService.java
-    │   │                   └── UserService.java
-    │   └── resources
-    │       └── application.properties
-    └── test
-        └── java
-            └── com
-                └── v322
-                    └── healthsync
-                        ├── AppointmentServiceTest.java
-                        ├── AuthServiceTest.java
-                        ├── BaseIntegrationTest.java
-                        ├── BedServiceTest.java
-                        ├── BillingServiceTest.java
-                        ├── DepartmentServiceTest.java
-                        ├── DoctorRepositoryTest.java
-                        ├── DoctorServiceTest.java
-                        ├── MedicationServiceTest.java
-                        ├── PatientServiceTest.java
-                        ├── PharmacistService.java
-                        ├── PrescriptionServiceTest.java
-                        ├── ReceptionistServiceTest.java
-                        └── UserServiceTest.java
-
-```
-
-### 4.2 Component Responsibilities
-
-#### 4.2.1 Controller Layer (`controller/`)
+#### 4.1.1 Controller Layer (`controller/`)
 **Purpose**: Handle HTTP requests and responses
 
 **Example Controllers:**
@@ -583,7 +315,7 @@ SE_HealthSync
 - HTTP status code management
 - Calling appropriate service methods
 
-#### 4.2.2 Service Layer (`service/`)
+#### 4.1.2 Service Layer (`service/`)
 **Purpose**: Implement business logic
 
 **Example Services:**
@@ -597,7 +329,7 @@ SE_HealthSync
 - Data validation
 - Coordination between repositories
 
-#### 4.2.3 Repository Layer (`repository/`)
+#### 4.1.3 Repository Layer (`repository/`)
 **Purpose**: Database access abstraction
 
 **Example Repositories:**
@@ -610,7 +342,7 @@ SE_HealthSync
 - Custom query methods
 - Database interaction via JPA
 
-#### 4.2.4 Entity Layer (`entity/`)
+#### 4.1.4 Entity Layer (`entity/`)
 **Purpose**: Domain model representation
 
 **Example Entities:**
@@ -623,7 +355,7 @@ SE_HealthSync
 - Relationship definitions (OneToMany, ManyToOne)
 - Field validation constraints
 
-#### 4.2.5 DTO Layer (`dto/`)
+#### 4.1.5 DTO Layer (`dto/`)
 **Purpose**: Data transfer between layers
 
 **Example DTOs:**
@@ -635,7 +367,7 @@ SE_HealthSync
 - Avoid circular reference issues in JSON serialization
 - API response optimization
 
-#### 4.2.6 Frontend Structure (`frontend/`)
+#### 4.1.6 Frontend Structure (`frontend/`)
 **Component Organization:**
 - `components/`: Reusable components (buttons, forms, cards)
 - `pages/`: Full page components (dashboard, login)
