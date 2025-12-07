@@ -57,15 +57,6 @@ The HealthSync Hospital Management System provides a comprehensive software solu
 - **Bed Management**: Real-time bed allocation and occupancy tracking across departments
 - **Security**: JWT-based authentication with role-based access control
 
-### 1.5 References
-1. Spring Boot Documentation 3.3.4 - https://spring.io/projects/spring-boot
-2. React Documentation - https://react.dev/
-3. IEEE Std 830-1998, "IEEE Recommended Practice for Software Requirements Specifications"
-4. MySQL 8.0 Reference Manual
-5. JWT Authentication Best Practices
-6. REST API Design Guidelines
-
----
 
 ## 2. Overall Description
 
