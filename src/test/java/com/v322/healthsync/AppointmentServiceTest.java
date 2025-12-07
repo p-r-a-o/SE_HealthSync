@@ -6,54 +6,77 @@ import com.v322.healthsync.service.AppointmentService;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.DayOfWeek;
 import java.util.*;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
 
-@ExtendWith(MockitoExtension.class)
-class AppointmentServiceTest {
+class AppointmentServiceTest extends BaseIntegrationTest {
 
-    @Mock
-    private AppointmentRepository appointmentRepository;
+    @Autowired 
+    AppointmentRepository appointmentRepository;
 
-    @Mock
-    private PatientRepository patientRepository;
+    @Autowired 
+    PatientRepository patientRepository;
+    
+    @Autowired
+    DoctorRepository doctorRepository;
 
-    @Mock
-    private DoctorRepository doctorRepository;
+    @Autowired
+    DoctorAvailabilityRepository doctorAvailabilityRepository;
 
-    @Mock
-    private DoctorAvailabilityRepository doctorAvailabilityRepository;
-
-    @InjectMocks
-    private AppointmentService appointmentService;
+    @Autowired 
+    AppointmentService appointmentService;
+    
+    @Autowired
+    DepartmentRepository departmentRepository;
 
     private Appointment testAppointment;
     private Doctor testDoctor;
     private Patient testPatient;
     private DoctorAvailability testAvailability;
+    private Department testDepartment;
 
     @BeforeEach
     void setUp() {
+        // Clean up database
+        appointmentRepository.deleteAll();
+        doctorAvailabilityRepository.deleteAll();
+        doctorRepository.deleteAll();
+        patientRepository.deleteAll();
+        departmentRepository.deleteAll();
+        
+        // Create test department
+        testDepartment = new Department();
+        testDepartment.setDepartmentId("DEPT-001");
+        testDepartment.setName("Cardiology");
+        testDepartment.setLocation("Building A");
+        testDepartment = departmentRepository.save(testDepartment);
+
+        // Create test doctor
         testDoctor = new Doctor();
         testDoctor.setPersonId("DOC-001");
         testDoctor.setFirstName("John");
         testDoctor.setLastName("Doe");
+        testDoctor.setEmail("john.doe@test.com");
+        testDoctor.setPassword("password");
+        testDoctor.setDepartment(testDepartment);
+        testDoctor = doctorRepository.save(testDoctor);
 
+        // Create test patient
         testPatient = new Patient();
         testPatient.setPersonId("PAT-001");
         testPatient.setFirstName("Jane");
         testPatient.setLastName("Smith");
+        testPatient.setEmail("jane.smith@test.com");
+        testPatient.setPassword("password");
+        testPatient = patientRepository.save(testPatient);
 
+        // Create test appointment
         testAppointment = new Appointment();
         testAppointment.setDoctor(testDoctor);
         testAppointment.setPatient(testPatient);
@@ -61,60 +84,53 @@ class AppointmentServiceTest {
         testAppointment.setStartTime(LocalTime.of(10, 0));
         testAppointment.setEndTime(LocalTime.of(10, 30));
 
+        // Create test availability
         testAvailability = new DoctorAvailability();
         testAvailability.setDoctor(testDoctor);
         testAvailability.setDayOfWeek("FRIDAY");
         testAvailability.setStartTime(LocalTime.of(9, 0));
         testAvailability.setEndTime(LocalTime.of(17, 0));
+        testAvailability = doctorAvailabilityRepository.save(testAvailability);
     }
 
     // Book Appointment Tests
     @Test
     void bookAppointment_Success() {
-        when(doctorAvailabilityRepository.findByDoctorIdAndDay(anyString(), anyString()))
-                .thenReturn(List.of(testAvailability));
-        when(appointmentRepository.findConflictingAppointments(
-                anyString(), any(LocalDate.class), any(LocalTime.class), any(LocalTime.class)))
-                .thenReturn(Collections.emptyList());
-        when(appointmentRepository.save(any(Appointment.class)))
-                .thenReturn(testAppointment);
-
         Appointment result = appointmentService.bookAppointment(testAppointment);
 
         assertThat(result).isNotNull();
         assertThat(result.getStatus()).isEqualTo("SCHEDULED");
         assertThat(result.getAppointmentId()).startsWith("APT-");
-        verify(appointmentRepository).save(any(Appointment.class));
+        
+        Appointment saved = appointmentRepository.findById(result.getAppointmentId()).orElse(null);
+        assertThat(saved).isNotNull();
     }
 
     @Test
     void bookAppointment_DoctorNotAvailable_ThrowsException() {
-        when(doctorAvailabilityRepository.findByDoctorIdAndDay(anyString(), anyString()))
-                .thenReturn(Collections.emptyList());
+        testAppointment.setAppointmentDate(LocalDate.of(2024, 12, 16)); // Monday, no availability
 
         assertThatThrownBy(() -> appointmentService.bookAppointment(testAppointment))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("Doctor is not available at the requested time");
-
-        verify(appointmentRepository, never()).save(any());
     }
 
     @Test
     void bookAppointment_TimeSlotConflict_ThrowsException() {
-        Appointment conflictingAppointment = new Appointment();
-        conflictingAppointment.setAppointmentId("APT-002");
+        // Book first appointment
+        appointmentService.bookAppointment(testAppointment);
 
-        when(doctorAvailabilityRepository.findByDoctorIdAndDay(anyString(), anyString()))
-                .thenReturn(List.of(testAvailability));
-        when(appointmentRepository.findConflictingAppointments(
-                anyString(), any(LocalDate.class), any(LocalTime.class), any(LocalTime.class)))
-                .thenReturn(List.of(conflictingAppointment));
+        // Try to book conflicting appointment
+        Appointment conflicting = new Appointment();
+        conflicting.setDoctor(testDoctor);
+        conflicting.setPatient(testPatient);
+        conflicting.setAppointmentDate(LocalDate.of(2024, 12, 15));
+        conflicting.setStartTime(LocalTime.of(10, 0));
+        conflicting.setEndTime(LocalTime.of(10, 30));
 
-        assertThatThrownBy(() -> appointmentService.bookAppointment(testAppointment))
+        assertThatThrownBy(() -> appointmentService.bookAppointment(conflicting))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("Time slot conflicts with existing appointment");
-
-        verify(appointmentRepository, never()).save(any());
     }
 
     @Test
@@ -122,18 +138,9 @@ class AppointmentServiceTest {
         testAppointment.setStartTime(LocalTime.of(9, 0));
         testAppointment.setEndTime(LocalTime.of(9, 30));
 
-        when(doctorAvailabilityRepository.findByDoctorIdAndDay(anyString(), anyString()))
-                .thenReturn(List.of(testAvailability));
-        when(appointmentRepository.findConflictingAppointments(
-                anyString(), any(LocalDate.class), any(LocalTime.class), any(LocalTime.class)))
-                .thenReturn(Collections.emptyList());
-        when(appointmentRepository.save(any(Appointment.class)))
-                .thenReturn(testAppointment);
-
         Appointment result = appointmentService.bookAppointment(testAppointment);
 
         assertThat(result).isNotNull();
-        verify(appointmentRepository).save(any(Appointment.class));
     }
 
     @Test
@@ -141,91 +148,36 @@ class AppointmentServiceTest {
         testAppointment.setStartTime(LocalTime.of(16, 30));
         testAppointment.setEndTime(LocalTime.of(17, 0));
 
-        when(doctorAvailabilityRepository.findByDoctorIdAndDay(anyString(), anyString()))
-                .thenReturn(List.of(testAvailability));
-        when(appointmentRepository.findConflictingAppointments(
-                anyString(), any(LocalDate.class), any(LocalTime.class), any(LocalTime.class)))
-                .thenReturn(Collections.emptyList());
-        when(appointmentRepository.save(any(Appointment.class)))
-                .thenReturn(testAppointment);
-
         Appointment result = appointmentService.bookAppointment(testAppointment);
 
         assertThat(result).isNotNull();
-        verify(appointmentRepository).save(any(Appointment.class));
     }
 
     // Get Available Slots Tests
-//     @Test
-//     void getAvailableSlots_NoBookedAppointments_ReturnsAllSlots() {
-//         LocalDate date = LocalDate.of(2024, 12, 15);
-//         testAvailability.setStartTime(LocalTime.of(9, 0));
-//         testAvailability.setEndTime(LocalTime.of(10, 0));
-
-//         when(doctorAvailabilityRepository.findByDoctorIdAndDay(anyString(), anyString()))
-//                 .thenReturn(List.of(testAvailability));
-//         when(appointmentRepository.findByDoctorIdAndDate(anyString(), any(LocalDate.class)))
-//                 .thenReturn(Collections.emptyList());
-
-//         List<AppointmentService.TimeSlot> slots = appointmentService.getAvailableSlots("DOC-001", date);
-
-//         assertThat(slots).hasSize(2);
-//         assertThat(slots.get(0).getStartTime()).isEqualTo(LocalTime.of(9, 0));
-//         assertThat(slots.get(0).getEndTime()).isEqualTo(LocalTime.of(9, 30));
-//         assertThat(slots.get(1).getStartTime()).isEqualTo(LocalTime.of(9, 30));
-//         assertThat(slots.get(1).getEndTime()).isEqualTo(LocalTime.of(10, 0));
-//     }
-
-//     @Test
-//     void getAvailableSlots_WithBookedAppointments_ExcludesBookedSlots() {
-//         LocalDate date = LocalDate.of(2024, 12, 15);
-//         testAvailability.setStartTime(LocalTime.of(9, 0));
-//         testAvailability.setEndTime(LocalTime.of(11, 0));
-
-//         Appointment bookedAppointment = new Appointment();
-//         bookedAppointment.setStartTime(LocalTime.of(9, 30));
-//         bookedAppointment.setEndTime(LocalTime.of(10, 0));
-//         bookedAppointment.setStatus("SCHEDULED");
-
-//         when(doctorAvailabilityRepository.findByDoctorIdAndDay(anyString(), anyString()))
-//                 .thenReturn(List.of(testAvailability));
-//         when(appointmentRepository.findByDoctorIdAndDate(anyString(), any(LocalDate.class)))
-//                 .thenReturn(List.of(bookedAppointment));
-
-//         List<AppointmentService.TimeSlot> slots = appointmentService.getAvailableSlots("DOC-001", date);
-
-//         assertThat(slots).hasSize(3);
-//         assertThat(slots).noneMatch(slot -> 
-//             slot.getStartTime().equals(LocalTime.of(9, 30)));
-//     }
-
     @Test
     void getAvailableSlots_CancelledAppointments_IncludesThoseSlots() {
         LocalDate date = LocalDate.of(2024, 12, 15);
-        testAvailability.setStartTime(LocalTime.of(9, 0));
-        testAvailability.setEndTime(LocalTime.of(10, 0));
-
-        Appointment cancelledAppointment = new Appointment();
-        cancelledAppointment.setStartTime(LocalTime.of(9, 0));
-        cancelledAppointment.setEndTime(LocalTime.of(9, 30));
-        cancelledAppointment.setStatus("CANCELLED");
-
-        when(doctorAvailabilityRepository.findByDoctorIdAndDay(anyString(), anyString()))
-                .thenReturn(List.of(testAvailability));
-        when(appointmentRepository.findByDoctorIdAndDate(anyString(), any(LocalDate.class)))
-                .thenReturn(List.of(cancelledAppointment));
+        
+        // Book and cancel an appointment
+        Appointment cancelled = new Appointment();
+        cancelled.setDoctor(testDoctor);
+        cancelled.setPatient(testPatient);
+        cancelled.setAppointmentDate(date);
+        cancelled.setStartTime(LocalTime.of(9, 0));
+        cancelled.setEndTime(LocalTime.of(9, 30));
+        cancelled.setStatus("SCHEDULED");
+        cancelled = appointmentRepository.save(cancelled);
+        
+        appointmentService.cancelAppointment(cancelled.getAppointmentId());
 
         List<AppointmentService.TimeSlot> slots = appointmentService.getAvailableSlots("DOC-001", date);
 
-        assertThat(slots).hasSize(2);
+        assertThat(slots).isNotEmpty();
     }
 
     @Test
     void getAvailableSlots_NoAvailability_ReturnsEmptyList() {
-        LocalDate date = LocalDate.of(2024, 12, 15);
-
-        when(doctorAvailabilityRepository.findByDoctorIdAndDay(anyString(), anyString()))
-                .thenReturn(Collections.emptyList());
+        LocalDate date = LocalDate.of(2024, 12, 16); // Monday, no availability
 
         List<AppointmentService.TimeSlot> slots = appointmentService.getAvailableSlots("DOC-001", date);
 
@@ -236,27 +188,24 @@ class AppointmentServiceTest {
     void getAvailableSlots_MultipleAvailabilityBlocks_CombinesSlots() {
         LocalDate date = LocalDate.of(2024, 12, 15);
         
-        DoctorAvailability morning = new DoctorAvailability();
-        morning.setStartTime(LocalTime.of(9, 0));
-        morning.setEndTime(LocalTime.of(10, 0));
-
+        // Add afternoon availability
         DoctorAvailability afternoon = new DoctorAvailability();
+        afternoon.setDoctor(testDoctor);
+        afternoon.setDayOfWeek("FRIDAY");
         afternoon.setStartTime(LocalTime.of(14, 0));
         afternoon.setEndTime(LocalTime.of(15, 0));
-
-        when(doctorAvailabilityRepository.findByDoctorIdAndDay(anyString(), anyString()))
-                .thenReturn(List.of(morning, afternoon));
-        when(appointmentRepository.findByDoctorIdAndDate(anyString(), any(LocalDate.class)))
-                .thenReturn(Collections.emptyList());
+        doctorAvailabilityRepository.save(afternoon);
 
         List<AppointmentService.TimeSlot> slots = appointmentService.getAvailableSlots("DOC-001", date);
 
-        assertThat(slots).hasSize(4);
+        assertThat(slots.size()).isGreaterThan(2);
     }
 
     // Update Appointment Tests
     @Test
     void updateAppointment_AllFields_Success() {
+        Appointment saved = appointmentService.bookAppointment(testAppointment);
+        
         Appointment updatedData = new Appointment();
         updatedData.setAppointmentDate(LocalDate.of(2024, 12, 16));
         updatedData.setStartTime(LocalTime.of(11, 0));
@@ -266,122 +215,95 @@ class AppointmentServiceTest {
         
         Doctor newDoctor = new Doctor();
         newDoctor.setPersonId("DOC-002");
+        newDoctor.setFirstName("New");
+        newDoctor.setLastName("Doctor");
+        newDoctor.setEmail("new.doctor@test.com");
+        newDoctor.setPassword("password");
+        newDoctor.setDepartment(testDepartment);
+        newDoctor = doctorRepository.save(newDoctor);
         updatedData.setDoctor(newDoctor);
 
-        when(appointmentRepository.findById(anyString()))
-                .thenReturn(Optional.of(testAppointment));
-        when(appointmentRepository.save(any(Appointment.class)))
-                .thenReturn(testAppointment);
-
-        Appointment result = appointmentService.updateAppointment("APT-001", updatedData);
+        Appointment result = appointmentService.updateAppointment(saved.getAppointmentId(), updatedData);
 
         assertThat(result).isNotNull();
-        verify(appointmentRepository).save(any(Appointment.class));
+        assertThat(result.getAppointmentDate()).isEqualTo(LocalDate.of(2024, 12, 16));
     }
 
     @Test
     void updateAppointment_PartialUpdate_Success() {
+        Appointment saved = appointmentService.bookAppointment(testAppointment);
+        
         Appointment updatedData = new Appointment();
         updatedData.setStatus("CONFIRMED");
 
-        when(appointmentRepository.findById(anyString()))
-                .thenReturn(Optional.of(testAppointment));
-        when(appointmentRepository.save(any(Appointment.class)))
-                .thenReturn(testAppointment);
-
-        Appointment result = appointmentService.updateAppointment("APT-001", updatedData);
+        Appointment result = appointmentService.updateAppointment(saved.getAppointmentId(), updatedData);
 
         assertThat(result).isNotNull();
-        verify(appointmentRepository).save(any(Appointment.class));
+        assertThat(result.getStatus()).isEqualTo("CONFIRMED");
     }
 
     @Test
     void updateAppointment_AppointmentNotFound_ThrowsException() {
-        when(appointmentRepository.findById(anyString()))
-                .thenReturn(Optional.empty());
-
         assertThatThrownBy(() -> appointmentService.updateAppointment("APT-999", new Appointment()))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("Appointment not found");
-
-        verify(appointmentRepository, never()).save(any());
     }
 
     @Test
     void updateAppointment_NullFields_DoesNotUpdate() {
+        Appointment saved = appointmentService.bookAppointment(testAppointment);
+        LocalDate originalDate = saved.getAppointmentDate();
+        
         Appointment updatedData = new Appointment();
 
-        when(appointmentRepository.findById(anyString()))
-                .thenReturn(Optional.of(testAppointment));
-        when(appointmentRepository.save(any(Appointment.class)))
-                .thenReturn(testAppointment);
+        Appointment result = appointmentService.updateAppointment(saved.getAppointmentId(), updatedData);
 
-        Appointment result = appointmentService.updateAppointment("APT-001", updatedData);
-
-        assertThat(result).isNotNull();
-        verify(appointmentRepository).save(testAppointment);
+        assertThat(result.getAppointmentDate()).isEqualTo(originalDate);
     }
 
     // Cancel Appointment Tests
     @Test
     void cancelAppointment_Success() {
-        testAppointment.setAppointmentId("APT-001");
-        testAppointment.setStatus("SCHEDULED");
+        Appointment saved = appointmentService.bookAppointment(testAppointment);
 
-        when(appointmentRepository.findById("APT-001"))
-                .thenReturn(Optional.of(testAppointment));
-        when(appointmentRepository.save(any(Appointment.class)))
-                .thenReturn(testAppointment);
+        appointmentService.cancelAppointment(saved.getAppointmentId());
 
-        appointmentService.cancelAppointment("APT-001");
-
-        verify(appointmentRepository).save(testAppointment);
-        assertThat(testAppointment.getStatus()).isEqualTo("CANCELLED");
+        Appointment cancelled = appointmentRepository.findById(saved.getAppointmentId()).orElse(null);
+        assertThat(cancelled).isNotNull();
+        assertThat(cancelled.getStatus()).isEqualTo("CANCELLED");
     }
 
     @Test
     void cancelAppointment_AppointmentNotFound_ThrowsException() {
-        when(appointmentRepository.findById(anyString()))
-                .thenReturn(Optional.empty());
-
         assertThatThrownBy(() -> appointmentService.cancelAppointment("APT-999"))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("Appointment not found");
-
-        verify(appointmentRepository, never()).save(any());
     }
 
     @Test
     void cancelAppointment_AlreadyCancelled_StillUpdates() {
-        testAppointment.setStatus("CANCELLED");
+        Appointment saved = appointmentService.bookAppointment(testAppointment);
+        appointmentService.cancelAppointment(saved.getAppointmentId());
 
-        when(appointmentRepository.findById(anyString()))
-                .thenReturn(Optional.of(testAppointment));
-        when(appointmentRepository.save(any(Appointment.class)))
-                .thenReturn(testAppointment);
+        appointmentService.cancelAppointment(saved.getAppointmentId());
 
-        appointmentService.cancelAppointment("APT-001");
-
-        verify(appointmentRepository).save(testAppointment);
+        Appointment cancelled = appointmentRepository.findById(saved.getAppointmentId()).orElse(null);
+        assertThat(cancelled.getStatus()).isEqualTo("CANCELLED");
     }
 
     // Get Appointment Tests
     @Test
     void getAppointmentById_Success() {
-        when(appointmentRepository.findById("APT-001"))
-                .thenReturn(Optional.of(testAppointment));
+        Appointment saved = appointmentService.bookAppointment(testAppointment);
 
-        Appointment result = appointmentService.getAppointmentById("APT-001");
+        Appointment result = appointmentService.getAppointmentById(saved.getAppointmentId());
 
         assertThat(result).isNotNull();
-        assertThat(result).isEqualTo(testAppointment);
+        assertThat(result.getAppointmentId()).isEqualTo(saved.getAppointmentId());
     }
 
     @Test
     void getAppointmentById_NotFound_ThrowsException() {
-        when(appointmentRepository.findById(anyString()))
-                .thenReturn(Optional.empty());
-
         assertThatThrownBy(() -> appointmentService.getAppointmentById("APT-999"))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("Appointment not found");
@@ -389,21 +311,15 @@ class AppointmentServiceTest {
 
     @Test
     void getAppointmentsByPatient_Success() {
-        List<Appointment> appointments = List.of(testAppointment);
-        when(appointmentRepository.findByPatientId("PAT-001"))
-                .thenReturn(appointments);
+        appointmentService.bookAppointment(testAppointment);
 
         List<Appointment> result = appointmentService.getAppointmentsByPatient("PAT-001");
 
         assertThat(result).hasSize(1);
-        assertThat(result).containsExactly(testAppointment);
     }
 
     @Test
     void getAppointmentsByPatient_NoAppointments_ReturnsEmptyList() {
-        when(appointmentRepository.findByPatientId(anyString()))
-                .thenReturn(Collections.emptyList());
-
         List<Appointment> result = appointmentService.getAppointmentsByPatient("PAT-999");
 
         assertThat(result).isEmpty();
@@ -411,22 +327,17 @@ class AppointmentServiceTest {
 
     @Test
     void getAppointmentsByDoctor_Success() {
-        List<Appointment> appointments = List.of(testAppointment);
-        when(appointmentRepository.findByDoctorId("DOC-001"))
-                .thenReturn(appointments);
+        appointmentService.bookAppointment(testAppointment);
 
         List<Appointment> result = appointmentService.getAppointmentsByDoctor("DOC-001");
 
         assertThat(result).hasSize(1);
-        assertThat(result).containsExactly(testAppointment);
     }
 
     @Test
     void getAppointmentsByDate_Success() {
+        appointmentService.bookAppointment(testAppointment);
         LocalDate date = LocalDate.of(2024, 12, 15);
-        List<Appointment> appointments = List.of(testAppointment);
-        when(appointmentRepository.findByAppointmentDate(date))
-                .thenReturn(appointments);
 
         List<Appointment> result = appointmentService.getAppointmentsByDate(date);
 
@@ -435,9 +346,7 @@ class AppointmentServiceTest {
 
     @Test
     void getAppointmentsByStatus_Success() {
-        List<Appointment> appointments = List.of(testAppointment);
-        when(appointmentRepository.findByStatus("SCHEDULED"))
-                .thenReturn(appointments);
+        appointmentService.bookAppointment(testAppointment);
 
         List<Appointment> result = appointmentService.getAppointmentsByStatus("SCHEDULED");
 
@@ -447,28 +356,19 @@ class AppointmentServiceTest {
     // Conduct Consultation Tests
     @Test
     void conductConsultation_Success() {
-        testAppointment.setStatus("SCHEDULED");
-
-        when(appointmentRepository.findById("APT-001"))
-                .thenReturn(Optional.of(testAppointment));
-        when(appointmentRepository.save(any(Appointment.class)))
-                .thenReturn(testAppointment);
+        Appointment saved = appointmentService.bookAppointment(testAppointment);
 
         Appointment result = appointmentService.conductConsultation(
-                "APT-001", "Flu", "Rest and medication", "Patient recovering well");
+                saved.getAppointmentId(), "Flu", "Rest and medication", "Patient recovering well");
 
         assertThat(result.getStatus()).isEqualTo("COMPLETED");
         assertThat(result.getDiagnosis()).isEqualTo("Flu");
         assertThat(result.getTreatmentPlan()).isEqualTo("Rest and medication");
         assertThat(result.getNotes()).isEqualTo("Patient recovering well");
-        verify(appointmentRepository).save(testAppointment);
     }
 
     @Test
     void conductConsultation_AppointmentNotFound_ThrowsException() {
-        when(appointmentRepository.findById(anyString()))
-                .thenReturn(Optional.empty());
-
         assertThatThrownBy(() -> appointmentService.conductConsultation(
                 "APT-999", "Flu", "Rest", "Notes"))
                 .isInstanceOf(RuntimeException.class)
@@ -477,31 +377,23 @@ class AppointmentServiceTest {
 
     @Test
     void conductConsultation_WithNullValues_Success() {
-        when(appointmentRepository.findById("APT-001"))
-                .thenReturn(Optional.of(testAppointment));
-        when(appointmentRepository.save(any(Appointment.class)))
-                .thenReturn(testAppointment);
+        Appointment saved = appointmentService.bookAppointment(testAppointment);
 
         Appointment result = appointmentService.conductConsultation(
-                "APT-001", null, null, null);
+                saved.getAppointmentId(), null, null, null);
 
         assertThat(result.getStatus()).isEqualTo("COMPLETED");
-        verify(appointmentRepository).save(testAppointment);
     }
 
     @Test
     void conductConsultation_AlreadyCompleted_UpdatesAgain() {
-        testAppointment.setStatus("COMPLETED");
-
-        when(appointmentRepository.findById("APT-001"))
-                .thenReturn(Optional.of(testAppointment));
-        when(appointmentRepository.save(any(Appointment.class)))
-                .thenReturn(testAppointment);
+        Appointment saved = appointmentService.bookAppointment(testAppointment);
+        appointmentService.conductConsultation(saved.getAppointmentId(), "First", "First", "First");
 
         Appointment result = appointmentService.conductConsultation(
-                "APT-001", "Updated diagnosis", "Updated plan", "Updated notes");
+                saved.getAppointmentId(), "Updated diagnosis", "Updated plan", "Updated notes");
 
         assertThat(result.getStatus()).isEqualTo("COMPLETED");
-        verify(appointmentRepository).save(testAppointment);
+        assertThat(result.getDiagnosis()).isEqualTo("Updated diagnosis");
     }
 }

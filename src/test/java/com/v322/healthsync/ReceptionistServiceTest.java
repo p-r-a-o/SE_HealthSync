@@ -6,59 +6,52 @@ import com.v322.healthsync.service.ReceptionistService;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.*;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
 
-@ExtendWith(MockitoExtension.class)
-class ReceptionistServiceTest {
+class ReceptionistServiceTest extends BaseIntegrationTest {
 
-    @Mock
-    private ReceptionistRepository receptionistRepository;
+    @Autowired
+    ReceptionistRepository receptionistRepository;
 
-    @InjectMocks
-    private ReceptionistService receptionistService;
+    @Autowired
+    ReceptionistService receptionistService;
 
     private Receptionist testReceptionist;
 
     @BeforeEach
     void setUp() {
+        receptionistRepository.deleteAll();
+
         testReceptionist = new Receptionist();
         testReceptionist.setPersonId("REC-001");
         testReceptionist.setFirstName("Sarah");
         testReceptionist.setLastName("Williams");
         testReceptionist.setContactNumber("1234567890");
         testReceptionist.setEmail("sarah.williams@hospital.com");
+        testReceptionist.setPassword("password");
         testReceptionist.setCity("Boston");
     }
 
     // Create Receptionist Tests
     @Test
     void createReceptionist_Success() {
-        when(receptionistRepository.save(any(Receptionist.class)))
-                .thenReturn(testReceptionist);
-
         Receptionist result = receptionistService.createReceptionist(testReceptionist);
 
         assertThat(result).isNotNull();
         assertThat(result.getPersonId()).isEqualTo("REC-001");
         assertThat(result.getFirstName()).isEqualTo("Sarah");
         assertThat(result.getLastName()).isEqualTo("Williams");
-        verify(receptionistRepository).save(testReceptionist);
+        
+        Receptionist saved = receptionistRepository.findById(result.getPersonId()).orElse(null);
+        assertThat(saved).isNotNull();
     }
 
     @Test
     void createReceptionist_WithAllFields_Success() {
-        when(receptionistRepository.save(any(Receptionist.class)))
-                .thenReturn(testReceptionist);
-
         Receptionist result = receptionistService.createReceptionist(testReceptionist);
 
         assertThat(result.getContactNumber()).isEqualTo("1234567890");
@@ -72,21 +65,18 @@ class ReceptionistServiceTest {
         minimal.setPersonId("REC-002");
         minimal.setFirstName("John");
         minimal.setLastName("Doe");
-
-        when(receptionistRepository.save(any(Receptionist.class)))
-                .thenReturn(minimal);
+        minimal.setEmail("john.doe@test.com");
+        minimal.setPassword("password");
 
         Receptionist result = receptionistService.createReceptionist(minimal);
 
         assertThat(result).isNotNull();
-        verify(receptionistRepository).save(minimal);
     }
 
     // Get Receptionist Tests
     @Test
     void getReceptionistById_Success() {
-        when(receptionistRepository.findById("REC-001"))
-                .thenReturn(Optional.of(testReceptionist));
+        receptionistRepository.save(testReceptionist);
 
         Receptionist result = receptionistService.getReceptionistById("REC-001");
 
@@ -97,9 +87,6 @@ class ReceptionistServiceTest {
 
     @Test
     void getReceptionistById_NotFound_ThrowsException() {
-        when(receptionistRepository.findById(anyString()))
-                .thenReturn(Optional.empty());
-
         assertThatThrownBy(() -> receptionistService.getReceptionistById("REC-999"))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("Receptionist not found");
@@ -107,9 +94,6 @@ class ReceptionistServiceTest {
 
     @Test
     void getReceptionistById_NullId_ThrowsException() {
-        when(receptionistRepository.findById(null))
-                .thenReturn(Optional.empty());
-
         assertThatThrownBy(() -> receptionistService.getReceptionistById(null))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("Receptionist not found");
@@ -117,8 +101,7 @@ class ReceptionistServiceTest {
 
     @Test
     void getReceptionistByEmail_Success() {
-        when(receptionistRepository.findByEmail("sarah.williams@hospital.com"))
-                .thenReturn(testReceptionist);
+        receptionistRepository.save(testReceptionist);
 
         Receptionist result = receptionistService.getReceptionistByEmail("sarah.williams@hospital.com");
 
@@ -128,9 +111,6 @@ class ReceptionistServiceTest {
 
     @Test
     void getReceptionistByEmail_NotFound_ReturnsNull() {
-        when(receptionistRepository.findByEmail(anyString()))
-                .thenReturn(null);
-
         Receptionist result = receptionistService.getReceptionistByEmail("nonexistent@hospital.com");
 
         assertThat(result).isNull();
@@ -138,8 +118,7 @@ class ReceptionistServiceTest {
 
     @Test
     void getReceptionistByEmail_CaseSensitive_ReturnsNull() {
-        when(receptionistRepository.findByEmail("SARAH.WILLIAMS@HOSPITAL.COM"))
-                .thenReturn(null);
+        receptionistRepository.save(testReceptionist);
 
         Receptionist result = receptionistService.getReceptionistByEmail("SARAH.WILLIAMS@HOSPITAL.COM");
 
@@ -148,8 +127,7 @@ class ReceptionistServiceTest {
 
     @Test
     void getReceptionistByContactNumber_Success() {
-        when(receptionistRepository.findByContactNumber("1234567890"))
-                .thenReturn(testReceptionist);
+        receptionistRepository.save(testReceptionist);
 
         Receptionist result = receptionistService.getReceptionistByContactNumber("1234567890");
 
@@ -159,9 +137,6 @@ class ReceptionistServiceTest {
 
     @Test
     void getReceptionistByContactNumber_NotFound_ReturnsNull() {
-        when(receptionistRepository.findByContactNumber(anyString()))
-                .thenReturn(null);
-
         Receptionist result = receptionistService.getReceptionistByContactNumber("9999999999");
 
         assertThat(result).isNull();
@@ -169,25 +144,23 @@ class ReceptionistServiceTest {
 
     @Test
     void getAllReceptionists_Success() {
+        receptionistRepository.save(testReceptionist);
+        
         Receptionist receptionist2 = new Receptionist();
         receptionist2.setPersonId("REC-002");
         receptionist2.setFirstName("Mike");
-        
-        List<Receptionist> receptionists = Arrays.asList(testReceptionist, receptionist2);
-        when(receptionistRepository.findAll())
-                .thenReturn(receptionists);
+        receptionist2.setLastName("Johnson");
+        receptionist2.setEmail("mike.johnson@hospital.com");
+        receptionist2.setPassword("password");
+        receptionistRepository.save(receptionist2);
 
         List<Receptionist> result = receptionistService.getAllReceptionists();
 
         assertThat(result).hasSize(2);
-        assertThat(result).containsExactlyInAnyOrder(testReceptionist, receptionist2);
     }
 
     @Test
     void getAllReceptionists_NoReceptionists_ReturnsEmptyList() {
-        when(receptionistRepository.findAll())
-                .thenReturn(Collections.emptyList());
-
         List<Receptionist> result = receptionistService.getAllReceptionists();
 
         assertThat(result).isEmpty();
@@ -195,8 +168,7 @@ class ReceptionistServiceTest {
 
     @Test
     void getAllReceptionists_SingleReceptionist_Success() {
-        when(receptionistRepository.findAll())
-                .thenReturn(Collections.singletonList(testReceptionist));
+        receptionistRepository.save(testReceptionist);
 
         List<Receptionist> result = receptionistService.getAllReceptionists();
 
@@ -207,6 +179,8 @@ class ReceptionistServiceTest {
     // Update Receptionist Tests
     @Test
     void updateReceptionist_AllFields_Success() {
+        Receptionist saved = receptionistRepository.save(testReceptionist);
+        
         Receptionist updateData = new Receptionist();
         updateData.setFirstName("Jane");
         updateData.setLastName("Doe");
@@ -214,146 +188,131 @@ class ReceptionistServiceTest {
         updateData.setEmail("jane.doe@hospital.com");
         updateData.setCity("New York");
 
-        when(receptionistRepository.findById("REC-001"))
-                .thenReturn(Optional.of(testReceptionist));
-        when(receptionistRepository.save(any(Receptionist.class)))
-                .thenReturn(testReceptionist);
-
-        Receptionist result = receptionistService.updateReceptionist("REC-001", updateData);
+        Receptionist result = receptionistService.updateReceptionist(saved.getPersonId(), updateData);
 
         assertThat(result).isNotNull();
-        verify(receptionistRepository).save(testReceptionist);
+        assertThat(result.getFirstName()).isEqualTo("Jane");
+        assertThat(result.getCity()).isEqualTo("New York");
     }
 
     @Test
     void updateReceptionist_PartialUpdate_Success() {
+        Receptionist saved = receptionistRepository.save(testReceptionist);
+        
         Receptionist updateData = new Receptionist();
         updateData.setFirstName("Jane");
         updateData.setLastName("Doe");
 
-        when(receptionistRepository.findById("REC-001"))
-                .thenReturn(Optional.of(testReceptionist));
-        when(receptionistRepository.save(any(Receptionist.class)))
-                .thenReturn(testReceptionist);
-
-        Receptionist result = receptionistService.updateReceptionist("REC-001", updateData);
+        Receptionist result = receptionistService.updateReceptionist(saved.getPersonId(), updateData);
 
         assertThat(result).isNotNull();
-        verify(receptionistRepository).save(testReceptionist);
+        assertThat(result.getFirstName()).isEqualTo("Jane");
+        assertThat(result.getLastName()).isEqualTo("Doe");
     }
 
     @Test
     void updateReceptionist_OnlyEmail_Success() {
+        Receptionist saved = receptionistRepository.save(testReceptionist);
+        
         Receptionist updateData = new Receptionist();
         updateData.setEmail("newemail@hospital.com");
 
-        when(receptionistRepository.findById("REC-001"))
-                .thenReturn(Optional.of(testReceptionist));
-        when(receptionistRepository.save(any(Receptionist.class)))
-                .thenReturn(testReceptionist);
-
-        Receptionist result = receptionistService.updateReceptionist("REC-001", updateData);
+        Receptionist result = receptionistService.updateReceptionist(saved.getPersonId(), updateData);
 
         assertThat(result).isNotNull();
-        verify(receptionistRepository).save(testReceptionist);
+        assertThat(result.getEmail()).isEqualTo("newemail@hospital.com");
     }
 
     @Test
     void updateReceptionist_OnlyContactNumber_Success() {
+        Receptionist saved = receptionistRepository.save(testReceptionist);
+        
         Receptionist updateData = new Receptionist();
         updateData.setContactNumber("5555555555");
 
-        when(receptionistRepository.findById("REC-001"))
-                .thenReturn(Optional.of(testReceptionist));
-        when(receptionistRepository.save(any(Receptionist.class)))
-                .thenReturn(testReceptionist);
-
-        Receptionist result = receptionistService.updateReceptionist("REC-001", updateData);
+        Receptionist result = receptionistService.updateReceptionist(saved.getPersonId(), updateData);
 
         assertThat(result).isNotNull();
-        verify(receptionistRepository).save(testReceptionist);
+        assertThat(result.getContactNumber()).isEqualTo("5555555555");
     }
 
     @Test
     void updateReceptionist_OnlyCity_Success() {
+        Receptionist saved = receptionistRepository.save(testReceptionist);
+        
         Receptionist updateData = new Receptionist();
         updateData.setCity("Chicago");
 
-        when(receptionistRepository.findById("REC-001"))
-                .thenReturn(Optional.of(testReceptionist));
-        when(receptionistRepository.save(any(Receptionist.class)))
-                .thenReturn(testReceptionist);
-
-        Receptionist result = receptionistService.updateReceptionist("REC-001", updateData);
+        Receptionist result = receptionistService.updateReceptionist(saved.getPersonId(), updateData);
 
         assertThat(result).isNotNull();
-        verify(receptionistRepository).save(testReceptionist);
+        assertThat(result.getCity()).isEqualTo("Chicago");
     }
 
     @Test
     void updateReceptionist_NullFields_DoesNotUpdate() {
+        Receptionist saved = receptionistRepository.save(testReceptionist);
+        String originalFirstName = saved.getFirstName();
+        
         Receptionist updateData = new Receptionist();
 
-        when(receptionistRepository.findById("REC-001"))
-                .thenReturn(Optional.of(testReceptionist));
-        when(receptionistRepository.save(any(Receptionist.class)))
-                .thenReturn(testReceptionist);
+        Receptionist result = receptionistService.updateReceptionist(saved.getPersonId(), updateData);
 
-        Receptionist result = receptionistService.updateReceptionist("REC-001", updateData);
-
-        assertThat(result).isNotNull();
-        verify(receptionistRepository).save(testReceptionist);
+        assertThat(result.getFirstName()).isEqualTo(originalFirstName);
     }
 
     @Test
     void updateReceptionist_ReceptionistNotFound_ThrowsException() {
-        when(receptionistRepository.findById(anyString()))
-                .thenReturn(Optional.empty());
-
         assertThatThrownBy(() -> 
                 receptionistService.updateReceptionist("REC-999", new Receptionist()))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("Receptionist not found");
-
-        verify(receptionistRepository, never()).save(any());
     }
 
     // Delete Receptionist Tests
     @Test
     void deleteReceptionist_Success() {
-        doNothing().when(receptionistRepository).deleteById("REC-001");
+        Receptionist saved = receptionistRepository.save(testReceptionist);
 
-        receptionistService.deleteReceptionist("REC-001");
+        receptionistService.deleteReceptionist(saved.getPersonId());
 
-        verify(receptionistRepository).deleteById("REC-001");
+        assertThat(receptionistRepository.findById(saved.getPersonId())).isEmpty();
     }
 
     @Test
     void deleteReceptionist_NonExistent_NoException() {
-        doNothing().when(receptionistRepository).deleteById("REC-999");
-
         receptionistService.deleteReceptionist("REC-999");
 
-        verify(receptionistRepository).deleteById("REC-999");
+        // No exception thrown
     }
 
     @Test
-    void deleteReceptionist_NullId_InvokesDelete() {
-        doNothing().when(receptionistRepository).deleteById(null);
-
+    void deleteReceptionist_NullId_NoException() {
         receptionistService.deleteReceptionist(null);
 
-        verify(receptionistRepository).deleteById(null);
+        // No exception thrown
     }
 
     @Test
     void deleteReceptionist_MultipleDeletes_Success() {
-        doNothing().when(receptionistRepository).deleteById(anyString());
+        Receptionist rec1 = receptionistRepository.save(testReceptionist);
+        
+        Receptionist rec2 = new Receptionist();
+        rec2.setPersonId("REC-002");
+        rec2.setEmail("rec2@test.com");
+        rec2.setPassword("password");
+        rec2 = receptionistRepository.save(rec2);
+        
+        Receptionist rec3 = new Receptionist();
+        rec3.setPersonId("REC-003");
+        rec3.setEmail("rec3@test.com");
+        rec3.setPassword("password");
+        rec3 = receptionistRepository.save(rec3);
 
-        receptionistService.deleteReceptionist("REC-001");
-        receptionistService.deleteReceptionist("REC-002");
-        receptionistService.deleteReceptionist("REC-003");
+        receptionistService.deleteReceptionist(rec1.getPersonId());
+        receptionistService.deleteReceptionist(rec2.getPersonId());
+        receptionistService.deleteReceptionist(rec3.getPersonId());
 
-        verify(receptionistRepository, times(3)).deleteById(anyString());
+        assertThat(receptionistRepository.count()).isEqualTo(0);
     }
 }

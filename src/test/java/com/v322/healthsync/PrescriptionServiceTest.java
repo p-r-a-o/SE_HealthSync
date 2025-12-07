@@ -6,38 +6,32 @@ import com.v322.healthsync.service.PrescriptionService;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.LocalDate;
 import java.util.*;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
 
-@ExtendWith(MockitoExtension.class)
-class PrescriptionServiceTest {
+class PrescriptionServiceTest extends BaseIntegrationTest {
 
-    @Mock
-    private PrescriptionRepository prescriptionRepository;
+    @Autowired
+    PrescriptionRepository prescriptionRepository;
 
-    @Mock
-    private PrescriptionItemRepository prescriptionItemRepository;
+    @Autowired
+    PrescriptionItemRepository prescriptionItemRepository;
 
-    @Mock
-    private PatientRepository patientRepository;
+    @Autowired
+    PatientRepository patientRepository;
 
-    @Mock
-    private DoctorRepository doctorRepository;
+    @Autowired
+    DoctorRepository doctorRepository;
 
-    @Mock
-    private MedicationRepository medicationRepository;
+    @Autowired
+    MedicationRepository medicationRepository;
 
-    @InjectMocks
-    private PrescriptionService prescriptionService;
+    @Autowired
+    PrescriptionService prescriptionService;
 
     private Prescription testPrescription;
     private PrescriptionItem testItem;
@@ -47,17 +41,30 @@ class PrescriptionServiceTest {
 
     @BeforeEach
     void setUp() {
+        prescriptionItemRepository.deleteAll();
+        prescriptionRepository.deleteAll();
+        medicationRepository.deleteAll();
+        doctorRepository.deleteAll();
+        patientRepository.deleteAll();
+
         testPatient = new Patient();
         testPatient.setPersonId("PAT-001");
+        testPatient.setEmail("patient@test.com");
+        testPatient.setPassword("password");
+        testPatient = patientRepository.save(testPatient);
 
         testDoctor = new Doctor();
         testDoctor.setPersonId("DOC-001");
+        testDoctor.setEmail("doctor@test.com");
+        testDoctor.setPassword("password");
+        testDoctor = doctorRepository.save(testDoctor);
 
         testMedication = new Medication();
         testMedication.setMedicationId("MED-001");
+        testMedication.setName("Test Med");
+        testMedication = medicationRepository.save(testMedication);
 
         testPrescription = new Prescription();
-        testPrescription.setPrescriptionId("PRES-001");
         testPrescription.setPatient(testPatient);
         testPrescription.setDoctor(testDoctor);
         testPrescription.setDateIssued(LocalDate.now());
@@ -65,62 +72,51 @@ class PrescriptionServiceTest {
         testPrescription.setInstructions("Take after meals");
 
         testItem = new PrescriptionItem();
-        testItem.setPrescriptionItemId("ITEM-001");
-        testItem.setPrescription(testPrescription);
         testItem.setMedication(testMedication);
-        // testItem.setDosage("500mg");
-        // testItem.setFrequency("Twice daily");
-        // testItem.setDuration("7 days");
     }
 
     // Create Prescription Tests
     @Test
     void createPrescription_Success() {
-        when(prescriptionRepository.save(any(Prescription.class)))
-                .thenReturn(testPrescription);
-
         Prescription result = prescriptionService.createPrescription(testPrescription);
 
         assertThat(result).isNotNull();
         assertThat(result.getPrescriptionId()).startsWith("PRES-");
         assertThat(result.getDateIssued()).isEqualTo(LocalDate.now());
         assertThat(result.getStatus()).isEqualTo("PENDING");
-        verify(prescriptionRepository).save(testPrescription);
+        
+        Prescription saved = prescriptionRepository.findById(result.getPrescriptionId()).orElse(null);
+        assertThat(saved).isNotNull();
     }
 
     @Test
     void createPrescription_SetsDefaultValues() {
-        when(prescriptionRepository.save(any(Prescription.class)))
-                .thenAnswer(invocation -> {
-                    Prescription pres = invocation.getArgument(0);
-                    assertThat(pres.getStatus()).isEqualTo("PENDING");
-                    assertThat(pres.getDateIssued()).isEqualTo(LocalDate.now());
-                    assertThat(pres.getPrescriptionId()).startsWith("PRES-");
-                    return pres;
-                });
+        Prescription result = prescriptionService.createPrescription(testPrescription);
 
-        prescriptionService.createPrescription(testPrescription);
-
-        verify(prescriptionRepository).save(testPrescription);
+        assertThat(result.getStatus()).isEqualTo("PENDING");
+        assertThat(result.getDateIssued()).isEqualTo(LocalDate.now());
+        assertThat(result.getPrescriptionId()).startsWith("PRES-");
     }
 
     // Add Prescription Item Tests
     @Test
     void addPrescriptionItem_Success() {
-        when(prescriptionItemRepository.save(any(PrescriptionItem.class)))
-                .thenReturn(testItem);
+        Prescription saved = prescriptionService.createPrescription(testPrescription);
+        testItem.setPrescription(saved);
 
         PrescriptionItem result = prescriptionService.addPrescriptionItem(testItem);
 
         assertThat(result).isNotNull();
         assertThat(result.getPrescriptionItemId()).startsWith("ITEM-");
-        verify(prescriptionItemRepository).save(testItem);
+        
+        PrescriptionItem savedItem = prescriptionItemRepository.findById(result.getPrescriptionItemId()).orElse(null);
+        assertThat(savedItem).isNotNull();
     }
 
     @Test
     void addPrescriptionItem_GeneratesItemId() {
-        when(prescriptionItemRepository.save(any(PrescriptionItem.class)))
-                .thenReturn(testItem);
+        Prescription saved = prescriptionService.createPrescription(testPrescription);
+        testItem.setPrescription(saved);
 
         PrescriptionItem result = prescriptionService.addPrescriptionItem(testItem);
 
@@ -128,76 +124,43 @@ class PrescriptionServiceTest {
     }
 
     // Create Prescription With Items Tests
-    // @Test
-    // void createPrescriptionWithItems_Success() {
-    //     PrescriptionItem item1 = new PrescriptionItem();
-    //     item1.setDosage("250mg");
-        
-    //     PrescriptionItem item2 = new PrescriptionItem();
-    //     item2.setDosage("100mg");
-
-    //     List<PrescriptionItem> items = Arrays.asList(item1, item2);
-
-    //     when(prescriptionRepository.save(any(Prescription.class)))
-    //             .thenReturn(testPrescription);
-    //     when(prescriptionItemRepository.save(any(PrescriptionItem.class)))
-    //             .thenAnswer(invocation -> invocation.getArgument(0));
-
-    //     Prescription result = prescriptionService.createPrescriptionWithItems(testPrescription, items);
-
-    //     assertThat(result).isNotNull();
-    //     verify(prescriptionRepository).save(testPrescription);
-    //     verify(prescriptionItemRepository, times(2)).save(any(PrescriptionItem.class));
-    // }
-
     @Test
     void createPrescriptionWithItems_EmptyItems_Success() {
-        when(prescriptionRepository.save(any(Prescription.class)))
-                .thenReturn(testPrescription);
-
         Prescription result = prescriptionService.createPrescriptionWithItems(
                 testPrescription, Collections.emptyList());
 
         assertThat(result).isNotNull();
-        verify(prescriptionItemRepository, never()).save(any());
+        
+        List<PrescriptionItem> items = prescriptionItemRepository.findByPrescriptionId(result.getPrescriptionId());
+        assertThat(items).isEmpty();
     }
 
     @Test
     void createPrescriptionWithItems_AssignsItemIds() {
         PrescriptionItem item = new PrescriptionItem();
-        
-        when(prescriptionRepository.save(any(Prescription.class)))
-                .thenReturn(testPrescription);
-        when(prescriptionItemRepository.save(any(PrescriptionItem.class)))
-                .thenAnswer(invocation -> {
-                    PrescriptionItem savedItem = invocation.getArgument(0);
-                    assertThat(savedItem.getPrescriptionItemId()).startsWith("ITEM-");
-                    assertThat(savedItem.getPrescription()).isEqualTo(testPrescription);
-                    return savedItem;
-                });
+        item.setMedication(testMedication);
 
-        prescriptionService.createPrescriptionWithItems(testPrescription, Arrays.asList(item));
+        Prescription result = prescriptionService.createPrescriptionWithItems(
+                testPrescription, Arrays.asList(item));
 
-        verify(prescriptionItemRepository).save(any(PrescriptionItem.class));
+        List<PrescriptionItem> savedItems = prescriptionItemRepository.findByPrescriptionId(result.getPrescriptionId());
+        assertThat(savedItems).hasSize(1);
+        assertThat(savedItems.get(0).getPrescriptionItemId()).startsWith("ITEM-");
     }
 
     // Get Prescription Tests
     @Test
     void getPrescriptionById_Success() {
-        when(prescriptionRepository.findById("PRES-001"))
-                .thenReturn(Optional.of(testPrescription));
+        Prescription saved = prescriptionService.createPrescription(testPrescription);
 
-        Prescription result = prescriptionService.getPrescriptionById("PRES-001");
+        Prescription result = prescriptionService.getPrescriptionById(saved.getPrescriptionId());
 
         assertThat(result).isNotNull();
-        assertThat(result.getPrescriptionId()).isEqualTo("PRES-001");
+        assertThat(result.getPrescriptionId()).isEqualTo(saved.getPrescriptionId());
     }
 
     @Test
     void getPrescriptionById_NotFound_ThrowsException() {
-        when(prescriptionRepository.findById(anyString()))
-                .thenReturn(Optional.empty());
-
         assertThatThrownBy(() -> prescriptionService.getPrescriptionById("PRES-999"))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("Prescription not found");
@@ -205,21 +168,15 @@ class PrescriptionServiceTest {
 
     @Test
     void getPrescriptionsByPatient_Success() {
-        List<Prescription> prescriptions = Arrays.asList(testPrescription);
-        when(prescriptionRepository.findByPatientId("PAT-001"))
-                .thenReturn(prescriptions);
+        prescriptionService.createPrescription(testPrescription);
 
-        List<Prescription> result = prescriptionService.getPrescriptionsByPatient("PAT-001");
+        List<Prescription> result = prescriptionService.getPrescriptionsByPatient(testPatient.getPersonId());
 
         assertThat(result).hasSize(1);
-        assertThat(result.get(0)).isEqualTo(testPrescription);
     }
 
     @Test
     void getPrescriptionsByPatient_NoPrescriptions_ReturnsEmptyList() {
-        when(prescriptionRepository.findByPatientId(anyString()))
-                .thenReturn(Collections.emptyList());
-
         List<Prescription> result = prescriptionService.getPrescriptionsByPatient("PAT-999");
 
         assertThat(result).isEmpty();
@@ -227,20 +184,16 @@ class PrescriptionServiceTest {
 
     @Test
     void getPrescriptionsByDoctor_Success() {
-        List<Prescription> prescriptions = Arrays.asList(testPrescription);
-        when(prescriptionRepository.findByDoctorId("DOC-001"))
-                .thenReturn(prescriptions);
+        prescriptionService.createPrescription(testPrescription);
 
-        List<Prescription> result = prescriptionService.getPrescriptionsByDoctor("DOC-001");
+        List<Prescription> result = prescriptionService.getPrescriptionsByDoctor(testDoctor.getPersonId());
 
         assertThat(result).hasSize(1);
     }
 
     @Test
     void getPrescriptionsByStatus_Success() {
-        List<Prescription> prescriptions = Arrays.asList(testPrescription);
-        when(prescriptionRepository.findByStatus("PENDING"))
-                .thenReturn(prescriptions);
+        prescriptionService.createPrescription(testPrescription);
 
         List<Prescription> result = prescriptionService.getPrescriptionsByStatus("PENDING");
 
@@ -250,22 +203,20 @@ class PrescriptionServiceTest {
 
     @Test
     void getPrescriptionItems_Success() {
-        List<PrescriptionItem> items = Arrays.asList(testItem);
-        when(prescriptionItemRepository.findByPrescriptionId("PRES-001"))
-                .thenReturn(items);
+        Prescription saved = prescriptionService.createPrescription(testPrescription);
+        testItem.setPrescription(saved);
+        prescriptionService.addPrescriptionItem(testItem);
 
-        List<PrescriptionItem> result = prescriptionService.getPrescriptionItems("PRES-001");
+        List<PrescriptionItem> result = prescriptionService.getPrescriptionItems(saved.getPrescriptionId());
 
         assertThat(result).hasSize(1);
-        assertThat(result.get(0)).isEqualTo(testItem);
     }
 
     @Test
     void getPrescriptionItems_NoItems_ReturnsEmptyList() {
-        when(prescriptionItemRepository.findByPrescriptionId(anyString()))
-                .thenReturn(Collections.emptyList());
+        Prescription saved = prescriptionService.createPrescription(testPrescription);
 
-        List<PrescriptionItem> result = prescriptionService.getPrescriptionItems("PRES-999");
+        List<PrescriptionItem> result = prescriptionService.getPrescriptionItems(saved.getPrescriptionId());
 
         assertThat(result).isEmpty();
     }
@@ -273,23 +224,16 @@ class PrescriptionServiceTest {
     // Update Prescription Status Tests
     @Test
     void updatePrescriptionStatus_Success() {
-        when(prescriptionRepository.findById("PRES-001"))
-                .thenReturn(Optional.of(testPrescription));
-        when(prescriptionRepository.save(any(Prescription.class)))
-                .thenReturn(testPrescription);
+        Prescription saved = prescriptionService.createPrescription(testPrescription);
 
-        Prescription result = prescriptionService.updatePrescriptionStatus("PRES-001", "DISPENSED");
+        Prescription result = prescriptionService.updatePrescriptionStatus(saved.getPrescriptionId(), "DISPENSED");
 
         assertThat(result).isNotNull();
         assertThat(result.getStatus()).isEqualTo("DISPENSED");
-        verify(prescriptionRepository).save(testPrescription);
     }
 
     @Test
     void updatePrescriptionStatus_PrescriptionNotFound_ThrowsException() {
-        when(prescriptionRepository.findById(anyString()))
-                .thenReturn(Optional.empty());
-
         assertThatThrownBy(() -> 
                 prescriptionService.updatePrescriptionStatus("PRES-999", "DISPENSED"))
                 .isInstanceOf(RuntimeException.class)
@@ -301,70 +245,58 @@ class PrescriptionServiceTest {
         String[] statuses = {"PENDING", "DISPENSED", "CANCELLED", "EXPIRED"};
 
         for (String status : statuses) {
-            when(prescriptionRepository.findById("PRES-001"))
-                    .thenReturn(Optional.of(testPrescription));
-            when(prescriptionRepository.save(any(Prescription.class)))
-                    .thenReturn(testPrescription);
-
-            Prescription result = prescriptionService.updatePrescriptionStatus("PRES-001", status);
+            Prescription saved = prescriptionService.createPrescription(testPrescription);
+            
+            Prescription result = prescriptionService.updatePrescriptionStatus(saved.getPrescriptionId(), status);
 
             assertThat(result.getStatus()).isEqualTo(status);
+            
+            // Clean up for next iteration
+            prescriptionRepository.delete(saved);
         }
     }
 
     // Update Prescription Tests
     @Test
     void updatePrescription_UpdateInstructions_Success() {
+        Prescription saved = prescriptionService.createPrescription(testPrescription);
+        
         Prescription updateData = new Prescription();
         updateData.setInstructions("Take before meals");
 
-        when(prescriptionRepository.findById("PRES-001"))
-                .thenReturn(Optional.of(testPrescription));
-        when(prescriptionRepository.save(any(Prescription.class)))
-                .thenReturn(testPrescription);
-
-        Prescription result = prescriptionService.updatePrescription("PRES-001", updateData);
+        Prescription result = prescriptionService.updatePrescription(saved.getPrescriptionId(), updateData);
 
         assertThat(result).isNotNull();
-        verify(prescriptionRepository).save(testPrescription);
+        assertThat(result.getInstructions()).isEqualTo("Take before meals");
     }
 
     @Test
     void updatePrescription_UpdateStatus_Success() {
+        Prescription saved = prescriptionService.createPrescription(testPrescription);
+        
         Prescription updateData = new Prescription();
         updateData.setStatus("COMPLETED");
 
-        when(prescriptionRepository.findById("PRES-001"))
-                .thenReturn(Optional.of(testPrescription));
-        when(prescriptionRepository.save(any(Prescription.class)))
-                .thenReturn(testPrescription);
-
-        Prescription result = prescriptionService.updatePrescription("PRES-001", updateData);
+        Prescription result = prescriptionService.updatePrescription(saved.getPrescriptionId(), updateData);
 
         assertThat(result).isNotNull();
-        verify(prescriptionRepository).save(testPrescription);
+        assertThat(result.getStatus()).isEqualTo("COMPLETED");
     }
 
     @Test
     void updatePrescription_NullFields_DoesNotUpdate() {
+        Prescription saved = prescriptionService.createPrescription(testPrescription);
+        String originalInstructions = saved.getInstructions();
+        
         Prescription updateData = new Prescription();
 
-        when(prescriptionRepository.findById("PRES-001"))
-                .thenReturn(Optional.of(testPrescription));
-        when(prescriptionRepository.save(any(Prescription.class)))
-                .thenReturn(testPrescription);
+        Prescription result = prescriptionService.updatePrescription(saved.getPrescriptionId(), updateData);
 
-        Prescription result = prescriptionService.updatePrescription("PRES-001", updateData);
-
-        assertThat(result).isNotNull();
-        verify(prescriptionRepository).save(testPrescription);
+        assertThat(result.getInstructions()).isEqualTo(originalInstructions);
     }
 
     @Test
     void updatePrescription_NotFound_ThrowsException() {
-        when(prescriptionRepository.findById(anyString()))
-                .thenReturn(Optional.empty());
-
         assertThatThrownBy(() -> 
                 prescriptionService.updatePrescription("PRES-999", new Prescription()))
                 .isInstanceOf(RuntimeException.class)
@@ -374,20 +306,22 @@ class PrescriptionServiceTest {
     // Delete Prescription Tests
     @Test
     void deletePrescription_Success() {
-        doNothing().when(prescriptionRepository).deleteById("PRES-001");
+        Prescription saved = prescriptionService.createPrescription(testPrescription);
 
-        prescriptionService.deletePrescription("PRES-001");
+        prescriptionService.deletePrescription(saved.getPrescriptionId());
 
-        verify(prescriptionRepository).deleteById("PRES-001");
+        assertThat(prescriptionRepository.findById(saved.getPrescriptionId())).isEmpty();
     }
 
     @Test
     void deletePrescriptionItem_Success() {
-        doNothing().when(prescriptionItemRepository).deleteById("ITEM-001");
+        Prescription saved = prescriptionService.createPrescription(testPrescription);
+        testItem.setPrescription(saved);
+        PrescriptionItem savedItem = prescriptionService.addPrescriptionItem(testItem);
 
-        prescriptionService.deletePrescriptionItem("ITEM-001");
+        prescriptionService.deletePrescriptionItem(savedItem.getPrescriptionItemId());
 
-        verify(prescriptionItemRepository).deleteById("ITEM-001");
+        assertThat(prescriptionItemRepository.findById(savedItem.getPrescriptionItemId())).isEmpty();
     }
 
     // Get Prescriptions By Date Range Tests
@@ -395,24 +329,17 @@ class PrescriptionServiceTest {
     void getPrescriptionsByDateRange_Success() {
         LocalDate startDate = LocalDate.of(2024, 1, 1);
         LocalDate endDate = LocalDate.of(2024, 12, 31);
-        List<Prescription> prescriptions = Arrays.asList(testPrescription);
-
-        when(prescriptionRepository.findByDateRange(startDate, endDate))
-                .thenReturn(prescriptions);
+        prescriptionService.createPrescription(testPrescription);
 
         List<Prescription> result = prescriptionService.getPrescriptionsByDateRange(startDate, endDate);
 
         assertThat(result).hasSize(1);
-        verify(prescriptionRepository).findByDateRange(startDate, endDate);
     }
 
     @Test
     void getPrescriptionsByDateRange_NoPrescriptions_ReturnsEmptyList() {
-        LocalDate startDate = LocalDate.of(2024, 1, 1);
-        LocalDate endDate = LocalDate.of(2024, 12, 31);
-
-        when(prescriptionRepository.findByDateRange(startDate, endDate))
-                .thenReturn(Collections.emptyList());
+        LocalDate startDate = LocalDate.of(2020, 1, 1);
+        LocalDate endDate = LocalDate.of(2020, 12, 31);
 
         List<Prescription> result = prescriptionService.getPrescriptionsByDateRange(startDate, endDate);
 
@@ -422,21 +349,17 @@ class PrescriptionServiceTest {
     // Get Prescription Items By Patient Tests
     @Test
     void getPrescriptionItemsByPatient_Success() {
-        List<PrescriptionItem> items = Arrays.asList(testItem);
-        when(prescriptionItemRepository.findByPatientId("PAT-001"))
-                .thenReturn(items);
+        Prescription saved = prescriptionService.createPrescription(testPrescription);
+        testItem.setPrescription(saved);
+        prescriptionService.addPrescriptionItem(testItem);
 
-        List<PrescriptionItem> result = prescriptionService.getPrescriptionItemsByPatient("PAT-001");
+        List<PrescriptionItem> result = prescriptionService.getPrescriptionItemsByPatient(testPatient.getPersonId());
 
         assertThat(result).hasSize(1);
-        assertThat(result.get(0)).isEqualTo(testItem);
     }
 
     @Test
     void getPrescriptionItemsByPatient_NoItems_ReturnsEmptyList() {
-        when(prescriptionItemRepository.findByPatientId(anyString()))
-                .thenReturn(Collections.emptyList());
-
         List<PrescriptionItem> result = prescriptionService.getPrescriptionItemsByPatient("PAT-999");
 
         assertThat(result).isEmpty();

@@ -7,35 +7,29 @@ import com.v322.healthsync.service.PatientService.MedicalHistoryDTO;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.LocalDate;
 import java.util.*;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
 
-@ExtendWith(MockitoExtension.class)
-class PatientServiceTest {
+class PatientServiceTest extends BaseIntegrationTest {
 
-    @Mock
-    private PatientRepository patientRepository;
+    @Autowired
+    PatientRepository patientRepository;
 
-    @Mock
-    private AppointmentRepository appointmentRepository;
+    @Autowired
+    AppointmentRepository appointmentRepository;
 
-    @Mock
-    private PrescriptionRepository prescriptionRepository;
+    @Autowired
+    PrescriptionRepository prescriptionRepository;
 
-    @Mock
-    private BillRepository billRepository;
+    @Autowired
+    BillRepository billRepository;
 
-    @InjectMocks
-    private PatientService patientService;
+    @Autowired
+    PatientService patientService;
 
     private Patient testPatient;
     private Appointment testAppointment;
@@ -44,6 +38,11 @@ class PatientServiceTest {
 
     @BeforeEach
     void setUp() {
+        appointmentRepository.deleteAll();
+        prescriptionRepository.deleteAll();
+        billRepository.deleteAll();
+        patientRepository.deleteAll();
+
         testPatient = new Patient();
         testPatient.setPersonId("PAT-001");
         testPatient.setFirstName("John");
@@ -53,53 +52,43 @@ class PatientServiceTest {
         testPatient.setBloodGroup("O+");
         testPatient.setContactNumber("1234567890");
         testPatient.setEmail("john.doe@test.com");
+        testPatient.setPassword("password");
         testPatient.setCity("New York");
         testPatient.setRegistrationDate(LocalDate.now());
 
         testAppointment = new Appointment();
-        testAppointment.setPatient(testPatient);
+        testAppointment.setAppointmentId("APT-001");
 
         testPrescription = new Prescription();
-        testPrescription.setPatient(testPatient);
+        testPrescription.setPrescriptionId("PRES-001");
 
         testBill = new Bill();
-        testBill.setPatient(testPatient);
+        testBill.setBillId("BILL-001");
     }
 
     // Register Patient Tests
     @Test
     void registerPatient_Success() {
-        when(patientRepository.save(any(Patient.class)))
-                .thenReturn(testPatient);
-
         Patient result = patientService.registerPatient(testPatient);
 
         assertThat(result).isNotNull();
         assertThat(result.getRegistrationDate()).isEqualTo(LocalDate.now());
-        verify(patientRepository).save(testPatient);
+        
+        Patient saved = patientRepository.findById(result.getPersonId()).orElse(null);
+        assertThat(saved).isNotNull();
     }
 
     @Test
     void registerPatient_SetsRegistrationDate() {
         testPatient.setRegistrationDate(null);
 
-        when(patientRepository.save(any(Patient.class)))
-                .thenAnswer(invocation -> {
-                    Patient patient = invocation.getArgument(0);
-                    assertThat(patient.getRegistrationDate()).isEqualTo(LocalDate.now());
-                    return patient;
-                });
+        Patient result = patientService.registerPatient(testPatient);
 
-        patientService.registerPatient(testPatient);
-
-        verify(patientRepository).save(testPatient);
+        assertThat(result.getRegistrationDate()).isEqualTo(LocalDate.now());
     }
 
     @Test
     void registerPatient_WithAllFields_Success() {
-        when(patientRepository.save(any(Patient.class)))
-                .thenReturn(testPatient);
-
         Patient result = patientService.registerPatient(testPatient);
 
         assertThat(result.getFirstName()).isEqualTo("John");
@@ -110,6 +99,8 @@ class PatientServiceTest {
     // Update Patient Tests
     @Test
     void updatePatient_AllFields_Success() {
+        Patient saved = patientRepository.save(testPatient);
+        
         Patient updateData = new Patient();
         updateData.setFirstName("Jane");
         updateData.setLastName("Smith");
@@ -121,22 +112,15 @@ class PatientServiceTest {
         updateData.setCity("Boston");
         updateData.setNotes("Updated notes");
 
-        when(patientRepository.findById("PAT-001"))
-                .thenReturn(Optional.of(testPatient));
-        when(patientRepository.save(any(Patient.class)))
-                .thenReturn(testPatient);
-
-        Patient result = patientService.updatePatient("PAT-001", updateData);
+        Patient result = patientService.updatePatient(saved.getPersonId(), updateData);
 
         assertThat(result).isNotNull();
-        verify(patientRepository).save(testPatient);
+        assertThat(result.getFirstName()).isEqualTo("Jane");
+        assertThat(result.getCity()).isEqualTo("Boston");
     }
 
     @Test
     void updatePatient_PatientNotFound_ThrowsException() {
-        when(patientRepository.findById(anyString()))
-                .thenReturn(Optional.empty());
-
         assertThatThrownBy(() -> 
                 patientService.updatePatient("PAT-999", new Patient()))
                 .isInstanceOf(RuntimeException.class)
@@ -145,38 +129,32 @@ class PatientServiceTest {
 
     @Test
     void updatePatient_PartialUpdate_Success() {
+        Patient saved = patientRepository.save(testPatient);
+        
         Patient updateData = new Patient();
         updateData.setFirstName("Jane");
         updateData.setLastName("Smith");
 
-        when(patientRepository.findById("PAT-001"))
-                .thenReturn(Optional.of(testPatient));
-        when(patientRepository.save(any(Patient.class)))
-                .thenReturn(testPatient);
-
-        Patient result = patientService.updatePatient("PAT-001", updateData);
+        Patient result = patientService.updatePatient(saved.getPersonId(), updateData);
 
         assertThat(result).isNotNull();
-        verify(patientRepository).save(testPatient);
+        assertThat(result.getFirstName()).isEqualTo("Jane");
+        assertThat(result.getLastName()).isEqualTo("Smith");
     }
 
     // Get Patient Tests
     @Test
     void getPatientById_Success() {
-        when(patientRepository.findById("PAT-001"))
-                .thenReturn(Optional.of(testPatient));
+        Patient saved = patientRepository.save(testPatient);
 
-        Patient result = patientService.getPatientById("PAT-001");
+        Patient result = patientService.getPatientById(saved.getPersonId());
 
         assertThat(result).isNotNull();
-        assertThat(result.getPersonId()).isEqualTo("PAT-001");
+        assertThat(result.getPersonId()).isEqualTo(saved.getPersonId());
     }
 
     @Test
     void getPatientById_NotFound_ThrowsException() {
-        when(patientRepository.findById(anyString()))
-                .thenReturn(Optional.empty());
-
         assertThatThrownBy(() -> patientService.getPatientById("PAT-999"))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("Patient not found");
@@ -184,8 +162,7 @@ class PatientServiceTest {
 
     @Test
     void getPatientByEmail_Success() {
-        when(patientRepository.findByEmail("john.doe@test.com"))
-                .thenReturn(testPatient);
+        patientRepository.save(testPatient);
 
         Patient result = patientService.getPatientByEmail("john.doe@test.com");
 
@@ -195,9 +172,6 @@ class PatientServiceTest {
 
     @Test
     void getPatientByEmail_NotFound_ReturnsNull() {
-        when(patientRepository.findByEmail(anyString()))
-                .thenReturn(null);
-
         Patient result = patientService.getPatientByEmail("nonexistent@test.com");
 
         assertThat(result).isNull();
@@ -205,24 +179,23 @@ class PatientServiceTest {
 
     @Test
     void getAllPatients_Success() {
+        patientRepository.save(testPatient);
+        
         Patient patient2 = new Patient();
         patient2.setPersonId("PAT-002");
-        
-        List<Patient> patients = Arrays.asList(testPatient, patient2);
-        when(patientRepository.findAll())
-                .thenReturn(patients);
+        patient2.setFirstName("Jane");
+        patient2.setLastName("Smith");
+        patient2.setEmail("jane.smith@test.com");
+        patient2.setPassword("password");
+        patientRepository.save(patient2);
 
         List<Patient> result = patientService.getAllPatients();
 
         assertThat(result).hasSize(2);
-        assertThat(result).containsExactlyInAnyOrder(testPatient, patient2);
     }
 
     @Test
     void getAllPatients_NoPatients_ReturnsEmptyList() {
-        when(patientRepository.findAll())
-                .thenReturn(Collections.emptyList());
-
         List<Patient> result = patientService.getAllPatients();
 
         assertThat(result).isEmpty();
@@ -230,20 +203,16 @@ class PatientServiceTest {
 
     @Test
     void searchPatientsByName_Success() {
-        List<Patient> patients = Arrays.asList(testPatient);
-        when(patientRepository.searchByName("John"))
-                .thenReturn(patients);
+        patientRepository.save(testPatient);
 
         List<Patient> result = patientService.searchPatientsByName("John");
 
         assertThat(result).hasSize(1);
-        assertThat(result.get(0).getFirstName()).contains("John");
     }
 
     @Test
     void searchPatientsByName_NoMatch_ReturnsEmptyList() {
-        when(patientRepository.searchByName(anyString()))
-                .thenReturn(Collections.emptyList());
+        patientRepository.save(testPatient);
 
         List<Patient> result = patientService.searchPatientsByName("NonExistent");
 
@@ -252,9 +221,7 @@ class PatientServiceTest {
 
     @Test
     void getPatientsByCity_Success() {
-        List<Patient> patients = Arrays.asList(testPatient);
-        when(patientRepository.findByCity("New York"))
-                .thenReturn(patients);
+        patientRepository.save(testPatient);
 
         List<Patient> result = patientService.getPatientsByCity("New York");
 
@@ -264,8 +231,7 @@ class PatientServiceTest {
 
     @Test
     void getPatientsByCity_NoMatch_ReturnsEmptyList() {
-        when(patientRepository.findByCity(anyString()))
-                .thenReturn(Collections.emptyList());
+        patientRepository.save(testPatient);
 
         List<Patient> result = patientService.getPatientsByCity("Unknown");
 
@@ -274,9 +240,7 @@ class PatientServiceTest {
 
     @Test
     void getPatientsByBloodGroup_Success() {
-        List<Patient> patients = Arrays.asList(testPatient);
-        when(patientRepository.findByBloodGroup("O+"))
-                .thenReturn(patients);
+        patientRepository.save(testPatient);
 
         List<Patient> result = patientService.getPatientsByBloodGroup("O+");
 
@@ -286,8 +250,7 @@ class PatientServiceTest {
 
     @Test
     void getPatientsByBloodGroup_NoMatch_ReturnsEmptyList() {
-        when(patientRepository.findByBloodGroup(anyString()))
-                .thenReturn(Collections.emptyList());
+        patientRepository.save(testPatient);
 
         List<Patient> result = patientService.getPatientsByBloodGroup("AB-");
 
@@ -297,23 +260,21 @@ class PatientServiceTest {
     // Medical History Tests
     @Test
     void getMedicalHistory_Success() {
-        List<Appointment> appointments = Arrays.asList(testAppointment);
-        List<Prescription> prescriptions = Arrays.asList(testPrescription);
-        List<Bill> bills = Arrays.asList(testBill);
+        Patient saved = patientRepository.save(testPatient);
+        
+        testAppointment.setPatient(saved);
+        appointmentRepository.save(testAppointment);
+        
+        testPrescription.setPatient(saved);
+        prescriptionRepository.save(testPrescription);
+        
+        testBill.setPatient(saved);
+        billRepository.save(testBill);
 
-        when(patientRepository.findById("PAT-001"))
-                .thenReturn(Optional.of(testPatient));
-        when(appointmentRepository.findByPatientId("PAT-001"))
-                .thenReturn(appointments);
-        when(prescriptionRepository.findByPatientId("PAT-001"))
-                .thenReturn(prescriptions);
-        when(billRepository.findByPatientId("PAT-001"))
-                .thenReturn(bills);
-
-        PatientService.MedicalHistory result = patientService.getMedicalHistory("PAT-001");
+        PatientService.MedicalHistory result = patientService.getMedicalHistory(saved.getPersonId());
 
         assertThat(result).isNotNull();
-        assertThat(result.getPatient()).isEqualTo(testPatient);
+        assertThat(result.getPatient()).isEqualTo(saved);
         assertThat(result.getAppointments()).hasSize(1);
         assertThat(result.getPrescriptions()).hasSize(1);
         assertThat(result.getBills()).hasSize(1);
@@ -321,16 +282,9 @@ class PatientServiceTest {
 
     @Test
     void getMedicalHistory_NoData_ReturnsEmptyLists() {
-        when(patientRepository.findById("PAT-001"))
-                .thenReturn(Optional.of(testPatient));
-        when(appointmentRepository.findByPatientId("PAT-001"))
-                .thenReturn(Collections.emptyList());
-        when(prescriptionRepository.findByPatientId("PAT-001"))
-                .thenReturn(Collections.emptyList());
-        when(billRepository.findByPatientId("PAT-001"))
-                .thenReturn(Collections.emptyList());
+        Patient saved = patientRepository.save(testPatient);
 
-        PatientService.MedicalHistory result = patientService.getMedicalHistory("PAT-001");
+        PatientService.MedicalHistory result = patientService.getMedicalHistory(saved.getPersonId());
 
         assertThat(result.getAppointments()).isEmpty();
         assertThat(result.getPrescriptions()).isEmpty();
@@ -339,9 +293,6 @@ class PatientServiceTest {
 
     @Test
     void getMedicalHistory_PatientNotFound_ThrowsException() {
-        when(patientRepository.findById(anyString()))
-                .thenReturn(Optional.empty());
-
         assertThatThrownBy(() -> patientService.getMedicalHistory("PAT-999"))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("Patient not found");
@@ -349,20 +300,18 @@ class PatientServiceTest {
 
     @Test
     void getMedicalHistoryDTO_Success() {
-        List<Appointment> appointments = Arrays.asList(testAppointment);
-        List<Prescription> prescriptions = Arrays.asList(testPrescription);
-        List<Bill> bills = Arrays.asList(testBill);
+        Patient saved = patientRepository.save(testPatient);
+        
+        testAppointment.setPatient(saved);
+        appointmentRepository.save(testAppointment);
+        
+        testPrescription.setPatient(saved);
+        prescriptionRepository.save(testPrescription);
+        
+        testBill.setPatient(saved);
+        billRepository.save(testBill);
 
-        when(patientRepository.findById("PAT-001"))
-                .thenReturn(Optional.of(testPatient));
-        when(appointmentRepository.findByPatientId("PAT-001"))
-                .thenReturn(appointments);
-        when(prescriptionRepository.findByPatientId("PAT-001"))
-                .thenReturn(prescriptions);
-        when(billRepository.findByPatientId("PAT-001"))
-                .thenReturn(bills);
-
-        MedicalHistoryDTO result = patientService.getMedicalHistoryDTO("PAT-001");
+        MedicalHistoryDTO result = patientService.getMedicalHistoryDTO(saved.getPersonId());
 
         assertThat(result).isNotNull();
         assertThat(result.getPatient()).isNotNull();
@@ -373,9 +322,6 @@ class PatientServiceTest {
 
     @Test
     void getMedicalHistoryDTO_PatientNotFound_ThrowsException() {
-        when(patientRepository.findById(anyString()))
-                .thenReturn(Optional.empty());
-
         assertThatThrownBy(() -> patientService.getMedicalHistoryDTO("PAT-999"))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("Patient not found");
@@ -384,29 +330,33 @@ class PatientServiceTest {
     // Delete Patient Tests
     @Test
     void deletePatient_Success() {
-        doNothing().when(patientRepository).deleteById("PAT-001");
+        Patient saved = patientRepository.save(testPatient);
 
-        patientService.deletePatient("PAT-001");
+        patientService.deletePatient(saved.getPersonId());
 
-        verify(patientRepository).deleteById("PAT-001");
+        assertThat(patientRepository.findById(saved.getPersonId())).isEmpty();
     }
 
     @Test
     void deletePatient_NonExistent_NoException() {
-        doNothing().when(patientRepository).deleteById("PAT-999");
-
         patientService.deletePatient("PAT-999");
 
-        verify(patientRepository).deleteById("PAT-999");
+        // No exception thrown
     }
 
     @Test
     void deletePatient_MultipleDeletes_Success() {
-        doNothing().when(patientRepository).deleteById(anyString());
+        Patient patient1 = patientRepository.save(testPatient);
+        
+        Patient patient2 = new Patient();
+        patient2.setPersonId("PAT-002");
+        patient2.setEmail("patient2@test.com");
+        patient2.setPassword("password");
+        patient2 = patientRepository.save(patient2);
 
-        patientService.deletePatient("PAT-001");
-        patientService.deletePatient("PAT-002");
+        patientService.deletePatient(patient1.getPersonId());
+        patientService.deletePatient(patient2.getPersonId());
 
-        verify(patientRepository, times(2)).deleteById(anyString());
+        assertThat(patientRepository.count()).isEqualTo(0);
     }
 }

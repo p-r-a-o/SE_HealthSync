@@ -3,38 +3,40 @@ package com.v322.healthsync;
 import com.v322.healthsync.entity.Pharmacist;
 import com.v322.healthsync.entity.Pharmacy;
 import com.v322.healthsync.repository.PharmacistRepository;
+import com.v322.healthsync.repository.PharmacyRepository;
 import com.v322.healthsync.service.PharmacistService;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.*;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
 
-@ExtendWith(MockitoExtension.class)
-class PharmacistServiceTest {
+class PharmacistServiceTest extends BaseIntegrationTest {
 
-    @Mock
-    private PharmacistRepository pharmacistRepository;
+    @Autowired
+    PharmacistRepository pharmacistRepository;
 
-    @InjectMocks
-    private PharmacistService pharmacistService;
+    @Autowired
+    PharmacyRepository pharmacyRepository;
+
+    @Autowired
+    PharmacistService pharmacistService;
 
     private Pharmacist testPharmacist;
     private Pharmacy testPharmacy;
 
     @BeforeEach
     void setUp() {
+        pharmacistRepository.deleteAll();
+        pharmacyRepository.deleteAll();
+
         testPharmacy = new Pharmacy();
         testPharmacy.setPharmacyId("PHAR-001");
         testPharmacy.setLocation("Main Building");
+        testPharmacy = pharmacyRepository.save(testPharmacy);
 
         testPharmacist = new Pharmacist();
         testPharmacist.setPersonId("PHARM-001");
@@ -42,28 +44,25 @@ class PharmacistServiceTest {
         testPharmacist.setLastName("Johnson");
         testPharmacist.setContactNumber("1234567890");
         testPharmacist.setEmail("alice.johnson@pharmacy.com");
+        testPharmacist.setPassword("password");
         testPharmacist.setPharmacy(testPharmacy);
     }
 
     // Create Pharmacist Tests
     @Test
     void createPharmacist_Success() {
-        when(pharmacistRepository.save(any(Pharmacist.class)))
-                .thenReturn(testPharmacist);
-
         Pharmacist result = pharmacistService.createPharmacist(testPharmacist);
 
         assertThat(result).isNotNull();
         assertThat(result.getPersonId()).isEqualTo("PHARM-001");
         assertThat(result.getFirstName()).isEqualTo("Alice");
-        verify(pharmacistRepository).save(testPharmacist);
+        
+        Pharmacist saved = pharmacistRepository.findById(result.getPersonId()).orElse(null);
+        assertThat(saved).isNotNull();
     }
 
     @Test
     void createPharmacist_WithPharmacy_Success() {
-        when(pharmacistRepository.save(any(Pharmacist.class)))
-                .thenReturn(testPharmacist);
-
         Pharmacist result = pharmacistService.createPharmacist(testPharmacist);
 
         assertThat(result.getPharmacy()).isNotNull();
@@ -73,8 +72,7 @@ class PharmacistServiceTest {
     // Get Pharmacist Tests
     @Test
     void getPharmacistById_Success() {
-        when(pharmacistRepository.findById("PHARM-001"))
-                .thenReturn(Optional.of(testPharmacist));
+        pharmacistRepository.save(testPharmacist);
 
         Pharmacist result = pharmacistService.getPharmacistById("PHARM-001");
 
@@ -84,9 +82,6 @@ class PharmacistServiceTest {
 
     @Test
     void getPharmacistById_NotFound_ThrowsException() {
-        when(pharmacistRepository.findById(anyString()))
-                .thenReturn(Optional.empty());
-
         assertThatThrownBy(() -> pharmacistService.getPharmacistById("PHARM-999"))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("Pharmacist not found");
@@ -94,8 +89,7 @@ class PharmacistServiceTest {
 
     @Test
     void getPharmacistByEmail_Success() {
-        when(pharmacistRepository.findByEmail("alice.johnson@pharmacy.com"))
-                .thenReturn(testPharmacist);
+        pharmacistRepository.save(testPharmacist);
 
         Pharmacist result = pharmacistService.getPharmacistByEmail("alice.johnson@pharmacy.com");
 
@@ -105,9 +99,6 @@ class PharmacistServiceTest {
 
     @Test
     void getPharmacistByEmail_NotFound_ReturnsNull() {
-        when(pharmacistRepository.findByEmail(anyString()))
-                .thenReturn(null);
-
         Pharmacist result = pharmacistService.getPharmacistByEmail("nonexistent@pharmacy.com");
 
         assertThat(result).isNull();
@@ -115,10 +106,9 @@ class PharmacistServiceTest {
 
     @Test
     void getPharmacistByPharmacy_Success() {
-        when(pharmacistRepository.findByPharmacyId("PHAR-001"))
-                .thenReturn(testPharmacist);
+        pharmacistRepository.save(testPharmacist);
 
-        Pharmacist result = pharmacistService.getPharmacistByPharmacy("PHAR-001");
+        Pharmacist result = pharmacistService.getPharmacistByPharmacy(testPharmacy.getPharmacyId());
 
         assertThat(result).isNotNull();
         assertThat(result.getPharmacy().getPharmacyId()).isEqualTo("PHAR-001");
@@ -126,9 +116,6 @@ class PharmacistServiceTest {
 
     @Test
     void getPharmacistByPharmacy_NotFound_ReturnsNull() {
-        when(pharmacistRepository.findByPharmacyId(anyString()))
-                .thenReturn(null);
-
         Pharmacist result = pharmacistService.getPharmacistByPharmacy("PHAR-999");
 
         assertThat(result).isNull();
@@ -136,24 +123,24 @@ class PharmacistServiceTest {
 
     @Test
     void getAllPharmacists_Success() {
+        pharmacistRepository.save(testPharmacist);
+        
         Pharmacist pharmacist2 = new Pharmacist();
         pharmacist2.setPersonId("PHARM-002");
-        
-        List<Pharmacist> pharmacists = Arrays.asList(testPharmacist, pharmacist2);
-        when(pharmacistRepository.findAll())
-                .thenReturn(pharmacists);
+        pharmacist2.setFirstName("Bob");
+        pharmacist2.setLastName("Smith");
+        pharmacist2.setEmail("bob.smith@pharmacy.com");
+        pharmacist2.setPassword("password");
+        pharmacist2.setPharmacy(testPharmacy);
+        pharmacistRepository.save(pharmacist2);
 
         List<Pharmacist> result = pharmacistService.getAllPharmacists();
 
         assertThat(result).hasSize(2);
-        assertThat(result).containsExactlyInAnyOrder(testPharmacist, pharmacist2);
     }
 
     @Test
     void getAllPharmacists_NoPharmacists_ReturnsEmptyList() {
-        when(pharmacistRepository.findAll())
-                .thenReturn(Collections.emptyList());
-
         List<Pharmacist> result = pharmacistService.getAllPharmacists();
 
         assertThat(result).isEmpty();
@@ -162,63 +149,55 @@ class PharmacistServiceTest {
     // Update Pharmacist Tests
     @Test
     void updatePharmacist_AllFields_Success() {
+        Pharmacist saved = pharmacistRepository.save(testPharmacist);
+        
+        Pharmacy newPharmacy = new Pharmacy();
+        newPharmacy.setPharmacyId("PHAR-002");
+        newPharmacy.setLocation("North Building");
+        newPharmacy = pharmacyRepository.save(newPharmacy);
+        
         Pharmacist updateData = new Pharmacist();
         updateData.setFirstName("Bob");
         updateData.setLastName("Smith");
         updateData.setContactNumber("9876543210");
         updateData.setEmail("bob.smith@pharmacy.com");
-        
-        Pharmacy newPharmacy = new Pharmacy();
-        newPharmacy.setPharmacyId("PHAR-002");
         updateData.setPharmacy(newPharmacy);
 
-        when(pharmacistRepository.findById("PHARM-001"))
-                .thenReturn(Optional.of(testPharmacist));
-        when(pharmacistRepository.save(any(Pharmacist.class)))
-                .thenReturn(testPharmacist);
-
-        Pharmacist result = pharmacistService.updatePharmacist("PHARM-001", updateData);
+        Pharmacist result = pharmacistService.updatePharmacist(saved.getPersonId(), updateData);
 
         assertThat(result).isNotNull();
-        verify(pharmacistRepository).save(testPharmacist);
+        assertThat(result.getFirstName()).isEqualTo("Bob");
+        assertThat(result.getPharmacy().getPharmacyId()).isEqualTo("PHAR-002");
     }
 
     @Test
     void updatePharmacist_PartialUpdate_Success() {
+        Pharmacist saved = pharmacistRepository.save(testPharmacist);
+        
         Pharmacist updateData = new Pharmacist();
         updateData.setFirstName("Bob");
 
-        when(pharmacistRepository.findById("PHARM-001"))
-                .thenReturn(Optional.of(testPharmacist));
-        when(pharmacistRepository.save(any(Pharmacist.class)))
-                .thenReturn(testPharmacist);
-
-        Pharmacist result = pharmacistService.updatePharmacist("PHARM-001", updateData);
+        Pharmacist result = pharmacistService.updatePharmacist(saved.getPersonId(), updateData);
 
         assertThat(result).isNotNull();
-        verify(pharmacistRepository).save(testPharmacist);
+        assertThat(result.getFirstName()).isEqualTo("Bob");
+        assertThat(result.getLastName()).isEqualTo("Johnson"); // unchanged
     }
 
     @Test
     void updatePharmacist_NullFields_DoesNotUpdate() {
+        Pharmacist saved = pharmacistRepository.save(testPharmacist);
+        String originalFirstName = saved.getFirstName();
+        
         Pharmacist updateData = new Pharmacist();
 
-        when(pharmacistRepository.findById("PHARM-001"))
-                .thenReturn(Optional.of(testPharmacist));
-        when(pharmacistRepository.save(any(Pharmacist.class)))
-                .thenReturn(testPharmacist);
+        Pharmacist result = pharmacistService.updatePharmacist(saved.getPersonId(), updateData);
 
-        Pharmacist result = pharmacistService.updatePharmacist("PHARM-001", updateData);
-
-        assertThat(result).isNotNull();
-        verify(pharmacistRepository).save(testPharmacist);
+        assertThat(result.getFirstName()).isEqualTo(originalFirstName);
     }
 
     @Test
     void updatePharmacist_NotFound_ThrowsException() {
-        when(pharmacistRepository.findById(anyString()))
-                .thenReturn(Optional.empty());
-
         assertThatThrownBy(() -> 
                 pharmacistService.updatePharmacist("PHARM-999", new Pharmacist()))
                 .isInstanceOf(RuntimeException.class)
@@ -227,49 +206,52 @@ class PharmacistServiceTest {
 
     @Test
     void updatePharmacist_UpdatePharmacy_Success() {
+        Pharmacist saved = pharmacistRepository.save(testPharmacist);
+        
         Pharmacy newPharmacy = new Pharmacy();
         newPharmacy.setPharmacyId("PHAR-002");
+        newPharmacy.setLocation("South Building");
+        newPharmacy = pharmacyRepository.save(newPharmacy);
         
         Pharmacist updateData = new Pharmacist();
         updateData.setPharmacy(newPharmacy);
 
-        when(pharmacistRepository.findById("PHARM-001"))
-                .thenReturn(Optional.of(testPharmacist));
-        when(pharmacistRepository.save(any(Pharmacist.class)))
-                .thenReturn(testPharmacist);
-
-        Pharmacist result = pharmacistService.updatePharmacist("PHARM-001", updateData);
+        Pharmacist result = pharmacistService.updatePharmacist(saved.getPersonId(), updateData);
 
         assertThat(result).isNotNull();
-        verify(pharmacistRepository).save(testPharmacist);
+        assertThat(result.getPharmacy().getPharmacyId()).isEqualTo("PHAR-002");
     }
 
     // Delete Pharmacist Tests
     @Test
     void deletePharmacist_Success() {
-        doNothing().when(pharmacistRepository).deleteById("PHARM-001");
+        Pharmacist saved = pharmacistRepository.save(testPharmacist);
 
-        pharmacistService.deletePharmacist("PHARM-001");
+        pharmacistService.deletePharmacist(saved.getPersonId());
 
-        verify(pharmacistRepository).deleteById("PHARM-001");
+        assertThat(pharmacistRepository.findById(saved.getPersonId())).isEmpty();
     }
 
     @Test
     void deletePharmacist_NonExistent_NoException() {
-        doNothing().when(pharmacistRepository).deleteById("PHARM-999");
-
         pharmacistService.deletePharmacist("PHARM-999");
 
-        verify(pharmacistRepository).deleteById("PHARM-999");
+        // No exception thrown
     }
 
     @Test
     void deletePharmacist_MultipleDeletes_Success() {
-        doNothing().when(pharmacistRepository).deleteById(anyString());
+        Pharmacist pharm1 = pharmacistRepository.save(testPharmacist);
+        
+        Pharmacist pharm2 = new Pharmacist();
+        pharm2.setPersonId("PHARM-002");
+        pharm2.setEmail("pharm2@test.com");
+        pharm2.setPassword("password");
+        pharm2 = pharmacistRepository.save(pharm2);
 
-        pharmacistService.deletePharmacist("PHARM-001");
-        pharmacistService.deletePharmacist("PHARM-002");
+        pharmacistService.deletePharmacist(pharm1.getPersonId());
+        pharmacistService.deletePharmacist(pharm2.getPersonId());
 
-        verify(pharmacistRepository, times(2)).deleteById(anyString());
+        assertThat(pharmacistRepository.count()).isEqualTo(0);
     }
 }

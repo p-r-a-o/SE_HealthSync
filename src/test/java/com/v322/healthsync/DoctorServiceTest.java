@@ -6,37 +6,33 @@ import com.v322.healthsync.service.DoctorService;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.math.BigDecimal;
 import java.time.LocalTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
 
-@ExtendWith(MockitoExtension.class)
-class DoctorServiceTest {
+class DoctorServiceTest extends BaseIntegrationTest {
 
-    @Mock
-    private DoctorRepository doctorRepository;
+    @Autowired
+    DoctorRepository doctorRepository;
 
-    @Mock
-    private DoctorAvailabilityRepository doctorAvailabilityRepository;
+    @Autowired
+    DoctorAvailabilityRepository doctorAvailabilityRepository;
 
-    @Mock
-    private AppointmentRepository appointmentRepository;
+    @Autowired
+    AppointmentRepository appointmentRepository;
 
-    @Mock
-    private DepartmentRepository departmentRepository;
+    @Autowired
+    DepartmentRepository departmentRepository;
 
-    @InjectMocks
-    private DoctorService doctorService;
+    @Autowired
+    PatientRepository patientRepository;
+
+    @Autowired
+    DoctorService doctorService;
 
     private Doctor testDoctor;
     private Department testDepartment;
@@ -46,67 +42,68 @@ class DoctorServiceTest {
 
     @BeforeEach
     void setUp() {
+        appointmentRepository.deleteAll();
+        doctorAvailabilityRepository.deleteAll();
+        doctorRepository.deleteAll();
+        patientRepository.deleteAll();
+        departmentRepository.deleteAll();
+
         testDepartment = new Department();
         testDepartment.setDepartmentId("DEPT-001");
         testDepartment.setName("Cardiology");
+        testDepartment.setLocation("Building A");
+        testDepartment = departmentRepository.save(testDepartment);
 
         testDoctor = new Doctor();
         testDoctor.setPersonId("DOC-001");
         testDoctor.setFirstName("John");
         testDoctor.setLastName("Doe");
         testDoctor.setEmail("john.doe@hospital.com");
+        testDoctor.setPassword("password");
         testDoctor.setSpecialization("Cardiologist");
         testDoctor.setQualification("MBBS, MD");
         testDoctor.setDepartment(testDepartment);
         testDoctor.setConsultationFee(new BigDecimal("500.00"));
 
-        testAvailability = new DoctorAvailability();
-        testAvailability.setSlotId("SLOT-001");
-        testAvailability.setDoctor(testDoctor);
-        testAvailability.setDayOfWeek("MONDAY");
-        testAvailability.setStartTime(LocalTime.of(9, 0));
-        testAvailability.setEndTime(LocalTime.of(17, 0));
-
         testPatient = new Patient();
         testPatient.setPersonId("PAT-001");
         testPatient.setFirstName("Jane");
         testPatient.setLastName("Smith");
+        testPatient.setEmail("jane.smith@test.com");
+        testPatient.setPassword("password");
+
+        testAvailability = new DoctorAvailability();
+        testAvailability.setDayOfWeek("MONDAY");
+        testAvailability.setStartTime(LocalTime.of(9, 0));
+        testAvailability.setEndTime(LocalTime.of(17, 0));
 
         testAppointment = new Appointment();
-        testAppointment.setDoctor(testDoctor);
-        testAppointment.setPatient(testPatient);
     }
 
     // Create Doctor Tests
     @Test
     void createDoctor_Success() {
-        when(doctorRepository.save(any(Doctor.class)))
-                .thenReturn(testDoctor);
-
         Doctor result = doctorService.createDoctor(testDoctor);
 
         assertThat(result).isNotNull();
         assertThat(result.getPersonId()).isEqualTo("DOC-001");
-        verify(doctorRepository).save(testDoctor);
+        
+        Doctor saved = doctorRepository.findById(result.getPersonId()).orElse(null);
+        assertThat(saved).isNotNull();
     }
 
     @Test
     void createDoctor_WithAllFields_Success() {
-        when(doctorRepository.save(any(Doctor.class)))
-                .thenReturn(testDoctor);
-
         Doctor result = doctorService.createDoctor(testDoctor);
 
         assertThat(result.getSpecialization()).isEqualTo("Cardiologist");
-        assertThat(result.getConsultationFee()).isEqualTo(new BigDecimal("500.00"));
-        verify(doctorRepository).save(testDoctor);
+        assertThat(result.getConsultationFee()).isEqualByComparingTo(new BigDecimal("500.00"));
     }
 
     // Get Doctor Tests
     @Test
     void getDoctorById_Success() {
-        when(doctorRepository.findById("DOC-001"))
-                .thenReturn(Optional.of(testDoctor));
+        doctorRepository.save(testDoctor);
 
         Doctor result = doctorService.getDoctorById("DOC-001");
 
@@ -116,9 +113,6 @@ class DoctorServiceTest {
 
     @Test
     void getDoctorById_NotFound_ThrowsException() {
-        when(doctorRepository.findById(anyString()))
-                .thenReturn(Optional.empty());
-
         assertThatThrownBy(() -> doctorService.getDoctorById("DOC-999"))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("Doctor not found");
@@ -126,8 +120,7 @@ class DoctorServiceTest {
 
     @Test
     void getDoctorByEmail_Success() {
-        when(doctorRepository.findByEmail("john.doe@hospital.com"))
-                .thenReturn(testDoctor);
+        doctorRepository.save(testDoctor);
 
         Doctor result = doctorService.getDoctorByEmail("john.doe@hospital.com");
 
@@ -137,9 +130,6 @@ class DoctorServiceTest {
 
     @Test
     void getDoctorByEmail_NotFound_ReturnsNull() {
-        when(doctorRepository.findByEmail(anyString()))
-                .thenReturn(null);
-
         Doctor result = doctorService.getDoctorByEmail("nonexistent@hospital.com");
 
         assertThat(result).isNull();
@@ -147,24 +137,24 @@ class DoctorServiceTest {
 
     @Test
     void getAllDoctors_Success() {
+        doctorRepository.save(testDoctor);
+        
         Doctor doctor2 = new Doctor();
         doctor2.setPersonId("DOC-002");
-        
-        List<Doctor> doctors = Arrays.asList(testDoctor, doctor2);
-        when(doctorRepository.findAll())
-                .thenReturn(doctors);
+        doctor2.setFirstName("Jane");
+        doctor2.setLastName("Smith");
+        doctor2.setEmail("jane.smith@hospital.com");
+        doctor2.setPassword("password");
+        doctor2.setDepartment(testDepartment);
+        doctorRepository.save(doctor2);
 
         List<Doctor> result = doctorService.getAllDoctors();
 
         assertThat(result).hasSize(2);
-        assertThat(result).containsExactlyInAnyOrder(testDoctor, doctor2);
     }
 
     @Test
     void getAllDoctors_NoDoctors_ReturnsEmptyList() {
-        when(doctorRepository.findAll())
-                .thenReturn(Collections.emptyList());
-
         List<Doctor> result = doctorService.getAllDoctors();
 
         assertThat(result).isEmpty();
@@ -172,21 +162,16 @@ class DoctorServiceTest {
 
     @Test
     void getDoctorsByDepartment_Success() {
-        List<Doctor> doctors = Arrays.asList(testDoctor);
-        when(doctorRepository.findByDepartmentId("DEPT-001"))
-                .thenReturn(doctors);
+        doctorRepository.save(testDoctor);
 
-        List<Doctor> result = doctorService.getDoctorsByDepartment("DEPT-001");
+        List<Doctor> result = doctorService.getDoctorsByDepartment(testDepartment.getDepartmentId());
 
         assertThat(result).hasSize(1);
-        assertThat(result.get(0)).isEqualTo(testDoctor);
     }
 
     @Test
     void getDoctorsBySpecialization_Success() {
-        List<Doctor> doctors = Arrays.asList(testDoctor);
-        when(doctorRepository.findBySpecialization("Cardiologist"))
-                .thenReturn(doctors);
+        doctorRepository.save(testDoctor);
 
         List<Doctor> result = doctorService.getDoctorsBySpecialization("Cardiologist");
 
@@ -196,9 +181,7 @@ class DoctorServiceTest {
 
     @Test
     void searchDoctorsByName_Success() {
-        List<Doctor> doctors = Arrays.asList(testDoctor);
-        when(doctorRepository.searchByName("John"))
-                .thenReturn(doctors);
+        doctorRepository.save(testDoctor);
 
         List<Doctor> result = doctorService.searchDoctorsByName("John");
 
@@ -208,9 +191,7 @@ class DoctorServiceTest {
 
     @Test
     void getDoctorsByConsultationFee_Success() {
-        List<Doctor> doctors = Arrays.asList(testDoctor);
-        when(doctorRepository.findByConsultationFeeLessThanEqual(new BigDecimal("600.00")))
-                .thenReturn(doctors);
+        doctorRepository.save(testDoctor);
 
         List<Doctor> result = doctorService.getDoctorsByConsultationFee(new BigDecimal("600.00"));
 
@@ -220,20 +201,22 @@ class DoctorServiceTest {
     // Doctor Availability Tests
     @Test
     void addDoctorAvailability_Success() {
-        when(doctorAvailabilityRepository.save(any(DoctorAvailability.class)))
-                .thenReturn(testAvailability);
+        doctorRepository.save(testDoctor);
+        testAvailability.setDoctor(testDoctor);
 
         DoctorAvailability result = doctorService.addDoctorAvailability(testAvailability);
 
         assertThat(result).isNotNull();
         assertThat(result.getSlotId()).startsWith("SLOT-");
-        verify(doctorAvailabilityRepository).save(testAvailability);
+        
+        DoctorAvailability saved = doctorAvailabilityRepository.findById(result.getSlotId()).orElse(null);
+        assertThat(saved).isNotNull();
     }
 
     @Test
     void addDoctorAvailability_GeneratesSlotId() {
-        when(doctorAvailabilityRepository.save(any(DoctorAvailability.class)))
-                .thenReturn(testAvailability);
+        doctorRepository.save(testDoctor);
+        testAvailability.setDoctor(testDoctor);
 
         DoctorAvailability result = doctorService.addDoctorAvailability(testAvailability);
 
@@ -242,27 +225,25 @@ class DoctorServiceTest {
 
     @Test
     void updateDoctorAvailability_Success() {
+        doctorRepository.save(testDoctor);
+        testAvailability.setDoctor(testDoctor);
+        DoctorAvailability saved = doctorService.addDoctorAvailability(testAvailability);
+        
         DoctorAvailability updateData = new DoctorAvailability();
         updateData.setStartTime(LocalTime.of(10, 0));
         updateData.setEndTime(LocalTime.of(18, 0));
         updateData.setDayOfWeek("TUESDAY");
 
-        when(doctorAvailabilityRepository.findById("SLOT-001"))
-                .thenReturn(Optional.of(testAvailability));
-        when(doctorAvailabilityRepository.save(any(DoctorAvailability.class)))
-                .thenReturn(testAvailability);
-
-        DoctorAvailability result = doctorService.updateDoctorAvailability("SLOT-001", updateData);
+        DoctorAvailability result = doctorService.updateDoctorAvailability(saved.getSlotId(), updateData);
 
         assertThat(result).isNotNull();
-        verify(doctorAvailabilityRepository).save(testAvailability);
+        assertThat(result.getStartTime()).isEqualTo(LocalTime.of(10, 0));
+        assertThat(result.getEndTime()).isEqualTo(LocalTime.of(18, 0));
+        assertThat(result.getDayOfWeek()).isEqualTo("TUESDAY");
     }
 
     @Test
     void updateDoctorAvailability_NotFound_ThrowsException() {
-        when(doctorAvailabilityRepository.findById(anyString()))
-                .thenReturn(Optional.empty());
-
         assertThatThrownBy(() -> 
                 doctorService.updateDoctorAvailability("SLOT-999", new DoctorAvailability()))
                 .isInstanceOf(RuntimeException.class)
@@ -271,33 +252,34 @@ class DoctorServiceTest {
 
     @Test
     void deleteDoctorAvailability_Success() {
-        doNothing().when(doctorAvailabilityRepository).deleteById("SLOT-001");
+        doctorRepository.save(testDoctor);
+        testAvailability.setDoctor(testDoctor);
+        DoctorAvailability saved = doctorService.addDoctorAvailability(testAvailability);
 
-        doctorService.deleteDoctorAvailability("SLOT-001");
+        doctorService.deleteDoctorAvailability(saved.getSlotId());
 
-        verify(doctorAvailabilityRepository).deleteById("SLOT-001");
+        assertThat(doctorAvailabilityRepository.findById(saved.getSlotId())).isEmpty();
     }
 
     @Test
     void getDoctorAvailability_Success() {
-        List<DoctorAvailability> availabilities = Arrays.asList(testAvailability);
-        when(doctorAvailabilityRepository.findByDoctorId("DOC-001"))
-                .thenReturn(availabilities);
+        doctorRepository.save(testDoctor);
+        testAvailability.setDoctor(testDoctor);
+        doctorService.addDoctorAvailability(testAvailability);
 
-        List<DoctorAvailability> result = doctorService.getDoctorAvailability("DOC-001");
+        List<DoctorAvailability> result = doctorService.getDoctorAvailability(testDoctor.getPersonId());
 
         assertThat(result).hasSize(1);
-        assertThat(result.get(0)).isEqualTo(testAvailability);
     }
 
     @Test
     void getDoctorAvailabilityByDay_Success() {
-        List<DoctorAvailability> availabilities = Arrays.asList(testAvailability);
-        when(doctorAvailabilityRepository.findByDoctorIdAndDay("DOC-001", "MONDAY"))
-                .thenReturn(availabilities);
+        doctorRepository.save(testDoctor);
+        testAvailability.setDoctor(testDoctor);
+        doctorService.addDoctorAvailability(testAvailability);
 
         List<DoctorAvailability> result = 
-                doctorService.getDoctorAvailabilityByDay("DOC-001", "MONDAY");
+                doctorService.getDoctorAvailabilityByDay(testDoctor.getPersonId(), "MONDAY");
 
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getDayOfWeek()).isEqualTo("MONDAY");
@@ -305,11 +287,12 @@ class DoctorServiceTest {
 
     @Test
     void getDoctorAvailabilityByDay_NoDayMatch_ReturnsEmptyList() {
-        when(doctorAvailabilityRepository.findByDoctorIdAndDay(anyString(), anyString()))
-                .thenReturn(Collections.emptyList());
+        doctorRepository.save(testDoctor);
+        testAvailability.setDoctor(testDoctor);
+        doctorService.addDoctorAvailability(testAvailability);
 
         List<DoctorAvailability> result = 
-                doctorService.getDoctorAvailabilityByDay("DOC-001", "SUNDAY");
+                doctorService.getDoctorAvailabilityByDay(testDoctor.getPersonId(), "SUNDAY");
 
         assertThat(result).isEmpty();
     }
@@ -317,71 +300,77 @@ class DoctorServiceTest {
     // Get Patient List Tests
     @Test
     void getPatientListForDoctor_Success() {
+        doctorRepository.save(testDoctor);
+        patientRepository.save(testPatient);
+        
         Patient patient2 = new Patient();
         patient2.setPersonId("PAT-002");
+        patient2.setFirstName("Bob");
+        patient2.setLastName("Johnson");
+        patient2.setEmail("bob.johnson@test.com");
+        patient2.setPassword("password");
+        patientRepository.save(patient2);
+
+        testAppointment.setDoctor(testDoctor);
+        testAppointment.setPatient(testPatient);
+        testAppointment.setAppointmentId("APT-001");
+        appointmentRepository.save(testAppointment);
 
         Appointment appointment2 = new Appointment();
+        appointment2.setAppointmentId("APT-002");
         appointment2.setDoctor(testDoctor);
         appointment2.setPatient(patient2);
+        appointmentRepository.save(appointment2);
 
-        List<Appointment> appointments = Arrays.asList(testAppointment, appointment2);
-        when(appointmentRepository.findByDoctorId("DOC-001"))
-                .thenReturn(appointments);
-
-        List<Patient> result = doctorService.getPatientListForDoctor("DOC-001");
+        List<Patient> result = doctorService.getPatientListForDoctor(testDoctor.getPersonId());
 
         assertThat(result).hasSize(2);
-        assertThat(result).containsExactlyInAnyOrder(testPatient, patient2);
     }
 
     @Test
     void getPatientListForDoctor_NoAppointments_ReturnsEmptyList() {
-        when(appointmentRepository.findByDoctorId(anyString()))
-                .thenReturn(Collections.emptyList());
+        doctorRepository.save(testDoctor);
 
-        List<Patient> result = doctorService.getPatientListForDoctor("DOC-001");
+        List<Patient> result = doctorService.getPatientListForDoctor(testDoctor.getPersonId());
 
         assertThat(result).isEmpty();
     }
 
     @Test
     void getPatientListForDoctor_DuplicatePatients_ReturnsDistinct() {
+        doctorRepository.save(testDoctor);
+        patientRepository.save(testPatient);
+
+        testAppointment.setAppointmentId("APT-001");
+        testAppointment.setDoctor(testDoctor);
+        testAppointment.setPatient(testPatient);
+        appointmentRepository.save(testAppointment);
+
         Appointment appointment2 = new Appointment();
+        appointment2.setAppointmentId("APT-002");
         appointment2.setDoctor(testDoctor);
         appointment2.setPatient(testPatient);
+        appointmentRepository.save(appointment2);
 
-        List<Appointment> appointments = Arrays.asList(testAppointment, appointment2);
-        when(appointmentRepository.findByDoctorId("DOC-001"))
-                .thenReturn(appointments);
-
-        List<Patient> result = doctorService.getPatientListForDoctor("DOC-001");
+        List<Patient> result = doctorService.getPatientListForDoctor(testDoctor.getPersonId());
 
         assertThat(result).hasSize(1);
-        assertThat(result.get(0)).isEqualTo(testPatient);
     }
 
     // Update Consultation Fee Tests
     @Test
     void updateConsultationFee_Success() {
+        doctorRepository.save(testDoctor);
         BigDecimal newFee = new BigDecimal("750.00");
 
-        when(doctorRepository.findById("DOC-001"))
-                .thenReturn(Optional.of(testDoctor));
-        when(doctorRepository.save(any(Doctor.class)))
-                .thenReturn(testDoctor);
-
-        Doctor result = doctorService.updateConsultationFee("DOC-001", newFee);
+        Doctor result = doctorService.updateConsultationFee(testDoctor.getPersonId(), newFee);
 
         assertThat(result).isNotNull();
-        assertThat(result.getConsultationFee()).isEqualTo(newFee);
-        verify(doctorRepository).save(testDoctor);
+        assertThat(result.getConsultationFee()).isEqualByComparingTo(newFee);
     }
 
     @Test
     void updateConsultationFee_DoctorNotFound_ThrowsException() {
-        when(doctorRepository.findById(anyString()))
-                .thenReturn(Optional.empty());
-
         assertThatThrownBy(() -> 
                 doctorService.updateConsultationFee("DOC-999", new BigDecimal("500.00")))
                 .isInstanceOf(RuntimeException.class)
@@ -390,19 +379,24 @@ class DoctorServiceTest {
 
     @Test
     void updateConsultationFee_ZeroFee_Success() {
-        when(doctorRepository.findById("DOC-001"))
-                .thenReturn(Optional.of(testDoctor));
-        when(doctorRepository.save(any(Doctor.class)))
-                .thenReturn(testDoctor);
+        doctorRepository.save(testDoctor);
 
-        Doctor result = doctorService.updateConsultationFee("DOC-001", BigDecimal.ZERO);
+        Doctor result = doctorService.updateConsultationFee(testDoctor.getPersonId(), BigDecimal.ZERO);
 
-        assertThat(result.getConsultationFee()).isEqualTo(BigDecimal.ZERO);
+        assertThat(result.getConsultationFee()).isEqualByComparingTo(BigDecimal.ZERO);
     }
 
     // Update Doctor Tests
     @Test
     void updateDoctor_AllFields_Success() {
+        doctorRepository.save(testDoctor);
+        
+        Department newDept = new Department();
+        newDept.setDepartmentId("DEPT-002");
+        newDept.setName("Neurology");
+        newDept.setLocation("Building B");
+        newDept = departmentRepository.save(newDept);
+        
         Doctor updateData = new Doctor();
         updateData.setFirstName("Jane");
         updateData.setLastName("Smith");
@@ -410,59 +404,44 @@ class DoctorServiceTest {
         updateData.setEmail("jane.smith@hospital.com");
         updateData.setSpecialization("Neurologist");
         updateData.setQualification("MBBS, MD, DM");
-        
-        Department newDept = new Department();
-        newDept.setDepartmentId("DEPT-002");
         updateData.setDepartment(newDept);
         updateData.setConsultationFee(new BigDecimal("800.00"));
 
-        when(doctorRepository.findById("DOC-001"))
-                .thenReturn(Optional.of(testDoctor));
-        when(doctorRepository.save(any(Doctor.class)))
-                .thenReturn(testDoctor);
-
-        Doctor result = doctorService.updateDoctor("DOC-001", updateData);
+        Doctor result = doctorService.updateDoctor(testDoctor.getPersonId(), updateData);
 
         assertThat(result).isNotNull();
-        verify(doctorRepository).save(testDoctor);
+        assertThat(result.getFirstName()).isEqualTo("Jane");
+        assertThat(result.getSpecialization()).isEqualTo("Neurologist");
     }
 
     @Test
     void updateDoctor_PartialUpdate_Success() {
+        doctorRepository.save(testDoctor);
+        
         Doctor updateData = new Doctor();
         updateData.setFirstName("Jane");
 
-        when(doctorRepository.findById("DOC-001"))
-                .thenReturn(Optional.of(testDoctor));
-        when(doctorRepository.save(any(Doctor.class)))
-                .thenReturn(testDoctor);
-
-        Doctor result = doctorService.updateDoctor("DOC-001", updateData);
+        Doctor result = doctorService.updateDoctor(testDoctor.getPersonId(), updateData);
 
         assertThat(result).isNotNull();
-        verify(doctorRepository).save(testDoctor);
+        assertThat(result.getFirstName()).isEqualTo("Jane");
+        assertThat(result.getLastName()).isEqualTo("Doe"); // unchanged
     }
 
     @Test
     void updateDoctor_NullFields_DoesNotUpdate() {
+        doctorRepository.save(testDoctor);
+        String originalFirstName = testDoctor.getFirstName();
+        
         Doctor updateData = new Doctor();
 
-        when(doctorRepository.findById("DOC-001"))
-                .thenReturn(Optional.of(testDoctor));
-        when(doctorRepository.save(any(Doctor.class)))
-                .thenReturn(testDoctor);
+        Doctor result = doctorService.updateDoctor(testDoctor.getPersonId(), updateData);
 
-        Doctor result = doctorService.updateDoctor("DOC-001", updateData);
-
-        assertThat(result).isNotNull();
-        verify(doctorRepository).save(testDoctor);
+        assertThat(result.getFirstName()).isEqualTo(originalFirstName);
     }
 
     @Test
     void updateDoctor_DoctorNotFound_ThrowsException() {
-        when(doctorRepository.findById(anyString()))
-                .thenReturn(Optional.empty());
-
         assertThatThrownBy(() -> 
                 doctorService.updateDoctor("DOC-999", new Doctor()))
                 .isInstanceOf(RuntimeException.class)
@@ -472,19 +451,17 @@ class DoctorServiceTest {
     // Delete Doctor Tests
     @Test
     void deleteDoctor_Success() {
-        doNothing().when(doctorRepository).deleteById("DOC-001");
+        doctorRepository.save(testDoctor);
 
-        doctorService.deleteDoctor("DOC-001");
+        doctorService.deleteDoctor(testDoctor.getPersonId());
 
-        verify(doctorRepository).deleteById("DOC-001");
+        assertThat(doctorRepository.findById(testDoctor.getPersonId())).isEmpty();
     }
 
     @Test
     void deleteDoctor_NonExistent_NoException() {
-        doNothing().when(doctorRepository).deleteById("DOC-999");
-
         doctorService.deleteDoctor("DOC-999");
 
-        verify(doctorRepository).deleteById("DOC-999");
+        // No exception thrown
     }
 }

@@ -1,40 +1,42 @@
 package com.v322.healthsync;
 
-import com.v322.healthsync.entity.*;
-import com.v322.healthsync.repository.*;
-import com.v322.healthsync.service.MedicationService;
+import java.math.BigDecimal;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
 
-import java.math.BigDecimal;
-import java.util.*;
+import com.v322.healthsync.entity.Medication;
+import com.v322.healthsync.entity.Pharmacy;
+import com.v322.healthsync.entity.Prescription;
+import com.v322.healthsync.entity.PrescriptionItem;
+import com.v322.healthsync.repository.MedicationRepository;
+import com.v322.healthsync.repository.PharmacyRepository;
+import com.v322.healthsync.repository.PrescriptionItemRepository;
+import com.v322.healthsync.repository.PrescriptionRepository;
+import com.v322.healthsync.service.MedicationService;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+class MedicationServiceTest extends BaseIntegrationTest {
 
-@ExtendWith(MockitoExtension.class)
-class MedicationServiceTest {
+    @Autowired
+    MedicationRepository medicationRepository;
 
-    @Mock
-    private MedicationRepository medicationRepository;
+    @Autowired
+    PharmacyRepository pharmacyRepository;
 
-    @Mock
-    private PharmacyRepository pharmacyRepository;
+    @Autowired
+    PrescriptionRepository prescriptionRepository;
 
-    @Mock
-    private PrescriptionRepository prescriptionRepository;
+    @Autowired
+    PrescriptionItemRepository prescriptionItemRepository;
 
-    @Mock
-    private PrescriptionItemRepository prescriptionItemRepository;
-
-    @InjectMocks
-    private MedicationService medicationService;
+    @Autowired
+    MedicationService medicationService;
 
     private Medication testMedication;
     private Pharmacy testPharmacy;
@@ -43,12 +45,17 @@ class MedicationServiceTest {
 
     @BeforeEach
     void setUp() {
+        prescriptionItemRepository.deleteAll();
+        prescriptionRepository.deleteAll();
+        medicationRepository.deleteAll();
+        pharmacyRepository.deleteAll();
+
         testPharmacy = new Pharmacy();
         testPharmacy.setPharmacyId("PHAR-001");
         testPharmacy.setLocation("Main Building");
+        testPharmacy = pharmacyRepository.save(testPharmacy);
 
         testMedication = new Medication();
-        testMedication.setMedicationId("MED-001");
         testMedication.setName("Paracetamol");
         testMedication.setGenericName("Acetaminophen");
         testMedication.setManufacturer("PharmaCorp");
@@ -62,28 +69,22 @@ class MedicationServiceTest {
 
         testPrescriptionItem = new PrescriptionItem();
         testPrescriptionItem.setPrescriptionItemId("ITEM-001");
-        testPrescriptionItem.setPrescription(testPrescription);
-        testPrescriptionItem.setMedication(testMedication);
     }
 
     // Add Medication Tests
     @Test
     void addMedication_Success() {
-        when(medicationRepository.save(any(Medication.class)))
-                .thenReturn(testMedication);
-
         Medication result = medicationService.addMedication(testMedication);
 
         assertThat(result).isNotNull();
         assertThat(result.getMedicationId()).startsWith("MED-");
-        verify(medicationRepository).save(testMedication);
+        
+        Medication saved = medicationRepository.findById(result.getMedicationId()).orElse(null);
+        assertThat(saved).isNotNull();
     }
 
     @Test
     void addMedication_GeneratesMedicationId() {
-        when(medicationRepository.save(any(Medication.class)))
-                .thenReturn(testMedication);
-
         Medication result = medicationService.addMedication(testMedication);
 
         assertThat(result.getMedicationId()).matches("MED-[a-f0-9-]+");
@@ -91,77 +92,64 @@ class MedicationServiceTest {
 
     @Test
     void addMedication_WithAllFields_Success() {
-        when(medicationRepository.save(any(Medication.class)))
-                .thenReturn(testMedication);
-
         Medication result = medicationService.addMedication(testMedication);
 
         assertThat(result.getName()).isEqualTo("Paracetamol");
-        assertThat(result.getUnitPrice()).isEqualTo(new BigDecimal("50.00"));
-        verify(medicationRepository).save(testMedication);
+        assertThat(result.getUnitPrice()).isEqualByComparingTo(new BigDecimal("50.00"));
     }
 
     // Update Medication Tests
     @Test
     void updateMedication_AllFields_Success() {
+        Medication saved = medicationService.addMedication(testMedication);
+        
+        Pharmacy newPharmacy = new Pharmacy();
+        newPharmacy.setPharmacyId("PHAR-002");
+        newPharmacy.setLocation("North Building");
+        newPharmacy = pharmacyRepository.save(newPharmacy);
+        
         Medication updateData = new Medication();
         updateData.setName("Ibuprofen");
         updateData.setGenericName("Ibuprofen Generic");
         updateData.setManufacturer("MediPharm");
         updateData.setDescription("Anti-inflammatory");
         updateData.setUnitPrice(new BigDecimal("75.00"));
-        
-        Pharmacy newPharmacy = new Pharmacy();
-        newPharmacy.setPharmacyId("PHAR-002");
         updateData.setPharmacy(newPharmacy);
 
-        when(medicationRepository.findById("MED-001"))
-                .thenReturn(Optional.of(testMedication));
-        when(medicationRepository.save(any(Medication.class)))
-                .thenReturn(testMedication);
-
-        Medication result = medicationService.updateMedication("MED-001", updateData);
+        Medication result = medicationService.updateMedication(saved.getMedicationId(), updateData);
 
         assertThat(result).isNotNull();
-        verify(medicationRepository).save(testMedication);
+        assertThat(result.getName()).isEqualTo("Ibuprofen");
+        assertThat(result.getUnitPrice()).isEqualByComparingTo(new BigDecimal("75.00"));
     }
 
     @Test
     void updateMedication_PartialUpdate_Success() {
+        Medication saved = medicationService.addMedication(testMedication);
+        
         Medication updateData = new Medication();
         updateData.setName("Updated Paracetamol");
 
-        when(medicationRepository.findById("MED-001"))
-                .thenReturn(Optional.of(testMedication));
-        when(medicationRepository.save(any(Medication.class)))
-                .thenReturn(testMedication);
-
-        Medication result = medicationService.updateMedication("MED-001", updateData);
+        Medication result = medicationService.updateMedication(saved.getMedicationId(), updateData);
 
         assertThat(result).isNotNull();
-        verify(medicationRepository).save(testMedication);
+        assertThat(result.getName()).isEqualTo("Updated Paracetamol");
     }
 
     @Test
     void updateMedication_NullFields_DoesNotUpdate() {
+        Medication saved = medicationService.addMedication(testMedication);
+        String originalName = saved.getName();
+        
         Medication updateData = new Medication();
 
-        when(medicationRepository.findById("MED-001"))
-                .thenReturn(Optional.of(testMedication));
-        when(medicationRepository.save(any(Medication.class)))
-                .thenReturn(testMedication);
+        Medication result = medicationService.updateMedication(saved.getMedicationId(), updateData);
 
-        Medication result = medicationService.updateMedication("MED-001", updateData);
-
-        assertThat(result).isNotNull();
-        verify(medicationRepository).save(testMedication);
+        assertThat(result.getName()).isEqualTo(originalName);
     }
 
     @Test
     void updateMedication_NotFound_ThrowsException() {
-        when(medicationRepository.findById(anyString()))
-                .thenReturn(Optional.empty());
-
         assertThatThrownBy(() -> 
                 medicationService.updateMedication("MED-999", new Medication()))
                 .isInstanceOf(RuntimeException.class)
@@ -171,39 +159,33 @@ class MedicationServiceTest {
     // Delete Medication Tests
     @Test
     void deleteMedication_Success() {
-        doNothing().when(medicationRepository).deleteById("MED-001");
+        Medication saved = medicationService.addMedication(testMedication);
 
-        medicationService.deleteMedication("MED-001");
+        medicationService.deleteMedication(saved.getMedicationId());
 
-        verify(medicationRepository).deleteById("MED-001");
+        assertThat(medicationRepository.findById(saved.getMedicationId())).isEmpty();
     }
 
     @Test
     void deleteMedication_NonExistent_NoException() {
-        doNothing().when(medicationRepository).deleteById("MED-999");
-
         medicationService.deleteMedication("MED-999");
 
-        verify(medicationRepository).deleteById("MED-999");
+        // No exception thrown
     }
 
     // Get Medication Tests
     @Test
     void getMedicationById_Success() {
-        when(medicationRepository.findById("MED-001"))
-                .thenReturn(Optional.of(testMedication));
+        Medication saved = medicationService.addMedication(testMedication);
 
-        Medication result = medicationService.getMedicationById("MED-001");
+        Medication result = medicationService.getMedicationById(saved.getMedicationId());
 
         assertThat(result).isNotNull();
-        assertThat(result.getMedicationId()).isEqualTo("MED-001");
+        assertThat(result.getMedicationId()).isEqualTo(saved.getMedicationId());
     }
 
     @Test
     void getMedicationById_NotFound_ThrowsException() {
-        when(medicationRepository.findById(anyString()))
-                .thenReturn(Optional.empty());
-
         assertThatThrownBy(() -> medicationService.getMedicationById("MED-999"))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("Medication not found");
@@ -211,8 +193,7 @@ class MedicationServiceTest {
 
     @Test
     void getMedicationByName_Success() {
-        when(medicationRepository.findByName("Paracetamol"))
-                .thenReturn(Optional.of(testMedication));
+        medicationService.addMedication(testMedication);
 
         Medication result = medicationService.getMedicationByName("Paracetamol");
 
@@ -222,9 +203,6 @@ class MedicationServiceTest {
 
     @Test
     void getMedicationByName_NotFound_ThrowsException() {
-        when(medicationRepository.findByName(anyString()))
-                .thenReturn(Optional.empty());
-
         assertThatThrownBy(() -> medicationService.getMedicationByName("NonExistent"))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("Medication not found");
@@ -232,24 +210,23 @@ class MedicationServiceTest {
 
     @Test
     void getAllMedications_Success() {
-        Medication med2 = new Medication();
-        med2.setMedicationId("MED-002");
+        medicationService.addMedication(testMedication);
         
-        List<Medication> medications = Arrays.asList(testMedication, med2);
-        when(medicationRepository.findAll())
-                .thenReturn(medications);
+        Medication med2 = new Medication();
+        med2.setName("Aspirin");
+        med2.setGenericName("Aspirin Generic");
+        med2.setManufacturer("PharmaCorp");
+        med2.setUnitPrice(new BigDecimal("30.00"));
+        med2.setPharmacy(testPharmacy);
+        medicationService.addMedication(med2);
 
         List<Medication> result = medicationService.getAllMedications();
 
         assertThat(result).hasSize(2);
-        assertThat(result).containsExactlyInAnyOrder(testMedication, med2);
     }
 
     @Test
     void getAllMedications_NoMedications_ReturnsEmptyList() {
-        when(medicationRepository.findAll())
-                .thenReturn(Collections.emptyList());
-
         List<Medication> result = medicationService.getAllMedications();
 
         assertThat(result).isEmpty();
@@ -257,21 +234,15 @@ class MedicationServiceTest {
 
     @Test
     void getMedicationsByPharmacy_Success() {
-        List<Medication> medications = Arrays.asList(testMedication);
-        when(medicationRepository.findByPharmacyId("PHAR-001"))
-                .thenReturn(medications);
+        medicationService.addMedication(testMedication);
 
-        List<Medication> result = medicationService.getMedicationsByPharmacy("PHAR-001");
+        List<Medication> result = medicationService.getMedicationsByPharmacy(testPharmacy.getPharmacyId());
 
         assertThat(result).hasSize(1);
-        assertThat(result.get(0)).isEqualTo(testMedication);
     }
 
     @Test
     void getMedicationsByPharmacy_NoMedications_ReturnsEmptyList() {
-        when(medicationRepository.findByPharmacyId(anyString()))
-                .thenReturn(Collections.emptyList());
-
         List<Medication> result = medicationService.getMedicationsByPharmacy("PHAR-999");
 
         assertThat(result).isEmpty();
@@ -279,20 +250,16 @@ class MedicationServiceTest {
 
     @Test
     void searchMedicationsByKeyword_Success() {
-        List<Medication> medications = Arrays.asList(testMedication);
-        when(medicationRepository.searchByKeyword("Para"))
-                .thenReturn(medications);
+        medicationService.addMedication(testMedication);
 
         List<Medication> result = medicationService.searchMedicationsByKeyword("Para");
 
         assertThat(result).hasSize(1);
-        assertThat(result.get(0).getName()).contains("Para");
     }
 
     @Test
     void searchMedicationsByKeyword_NoMatch_ReturnsEmptyList() {
-        when(medicationRepository.searchByKeyword(anyString()))
-                .thenReturn(Collections.emptyList());
+        medicationService.addMedication(testMedication);
 
         List<Medication> result = medicationService.searchMedicationsByKeyword("xyz");
 
@@ -301,9 +268,7 @@ class MedicationServiceTest {
 
     @Test
     void getMedicationsByManufacturer_Success() {
-        List<Medication> medications = Arrays.asList(testMedication);
-        when(medicationRepository.findByManufacturer("PharmaCorp"))
-                .thenReturn(medications);
+        medicationService.addMedication(testMedication);
 
         List<Medication> result = medicationService.getMedicationsByManufacturer("PharmaCorp");
 
@@ -313,8 +278,7 @@ class MedicationServiceTest {
 
     @Test
     void getMedicationsByManufacturer_NoMatch_ReturnsEmptyList() {
-        when(medicationRepository.findByManufacturer(anyString()))
-                .thenReturn(Collections.emptyList());
+        medicationService.addMedication(testMedication);
 
         List<Medication> result = medicationService.getMedicationsByManufacturer("UnknownCorp");
 
@@ -323,10 +287,7 @@ class MedicationServiceTest {
 
     @Test
     void getMedicationsByPriceRange_Success() {
-        List<Medication> medications = Arrays.asList(testMedication);
-        when(medicationRepository.findByPriceRange(
-                new BigDecimal("0.00"), new BigDecimal("100.00")))
-                .thenReturn(medications);
+        medicationService.addMedication(testMedication);
 
         List<Medication> result = medicationService.getMedicationsByPriceRange(
                 new BigDecimal("0.00"), new BigDecimal("100.00"));
@@ -336,8 +297,7 @@ class MedicationServiceTest {
 
     @Test
     void getMedicationsByPriceRange_NoMatch_ReturnsEmptyList() {
-        when(medicationRepository.findByPriceRange(any(BigDecimal.class), any(BigDecimal.class)))
-                .thenReturn(Collections.emptyList());
+        medicationService.addMedication(testMedication);
 
         List<Medication> result = medicationService.getMedicationsByPriceRange(
                 new BigDecimal("1000.00"), new BigDecimal("2000.00"));
@@ -348,27 +308,23 @@ class MedicationServiceTest {
     // Dispense Medication Tests
     @Test
     void dispenseMedication_Success() {
-        testPrescription.setStatus("PENDING");
+        Medication savedMed = medicationService.addMedication(testMedication);
         
-        when(prescriptionRepository.findById("PRES-001"))
-                .thenReturn(Optional.of(testPrescription));
-        when(prescriptionItemRepository.findByPrescriptionId("PRES-001"))
-                .thenReturn(Arrays.asList(testPrescriptionItem));
-        when(prescriptionRepository.save(any(Prescription.class)))
-                .thenReturn(testPrescription);
+        testPrescription.setStatus("PENDING");
+        testPrescription = prescriptionRepository.save(testPrescription);
+        
+        testPrescriptionItem.setPrescription(testPrescription);
+        testPrescriptionItem.setMedication(savedMed);
+        prescriptionItemRepository.save(testPrescriptionItem);
 
-        Prescription result = medicationService.dispenseMedication("PRES-001");
+        Prescription result = medicationService.dispenseMedication(testPrescription.getPrescriptionId());
 
         assertThat(result).isNotNull();
         assertThat(result.getStatus()).isEqualTo("DISPENSED");
-        verify(prescriptionRepository).save(testPrescription);
     }
 
     @Test
     void dispenseMedication_PrescriptionNotFound_ThrowsException() {
-        when(prescriptionRepository.findById(anyString()))
-                .thenReturn(Optional.empty());
-
         assertThatThrownBy(() -> medicationService.dispenseMedication("PRES-999"))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("Prescription not found");
@@ -376,63 +332,60 @@ class MedicationServiceTest {
 
     @Test
     void dispenseMedication_NoItems_Success() {
-        when(prescriptionRepository.findById("PRES-001"))
-                .thenReturn(Optional.of(testPrescription));
-        when(prescriptionItemRepository.findByPrescriptionId("PRES-001"))
-                .thenReturn(Collections.emptyList());
-        when(prescriptionRepository.save(any(Prescription.class)))
-                .thenReturn(testPrescription);
+        testPrescription = prescriptionRepository.save(testPrescription);
 
-        Prescription result = medicationService.dispenseMedication("PRES-001");
+        Prescription result = medicationService.dispenseMedication(testPrescription.getPrescriptionId());
 
         assertThat(result.getStatus()).isEqualTo("DISPENSED");
     }
 
     @Test
     void dispenseMedication_MedicationNotInItem_ThrowsException() {
+        testPrescription = prescriptionRepository.save(testPrescription);
+        
+        testPrescriptionItem.setPrescription(testPrescription);
         testPrescriptionItem.setMedication(null);
+        prescriptionItemRepository.save(testPrescriptionItem);
 
-        when(prescriptionRepository.findById("PRES-001"))
-                .thenReturn(Optional.of(testPrescription));
-        when(prescriptionItemRepository.findByPrescriptionId("PRES-001"))
-                .thenReturn(Arrays.asList(testPrescriptionItem));
-
-        assertThatThrownBy(() -> medicationService.dispenseMedication("PRES-001"))
+        assertThatThrownBy(() -> medicationService.dispenseMedication(testPrescription.getPrescriptionId()))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("Medication not found in prescription item");
     }
 
     @Test
     void dispenseMedication_MultipleItems_Success() {
+        Medication savedMed = medicationService.addMedication(testMedication);
+        
+        testPrescription = prescriptionRepository.save(testPrescription);
+        
+        testPrescriptionItem.setPrescription(testPrescription);
+        testPrescriptionItem.setMedication(savedMed);
+        prescriptionItemRepository.save(testPrescriptionItem);
+        
         PrescriptionItem item2 = new PrescriptionItem();
-        item2.setMedication(testMedication);
+        item2.setPrescriptionItemId("ITEM-002");
+        item2.setPrescription(testPrescription);
+        item2.setMedication(savedMed);
+        prescriptionItemRepository.save(item2);
 
-        when(prescriptionRepository.findById("PRES-001"))
-                .thenReturn(Optional.of(testPrescription));
-        when(prescriptionItemRepository.findByPrescriptionId("PRES-001"))
-                .thenReturn(Arrays.asList(testPrescriptionItem, item2));
-        when(prescriptionRepository.save(any(Prescription.class)))
-                .thenReturn(testPrescription);
-
-        Prescription result = medicationService.dispenseMedication("PRES-001");
+        Prescription result = medicationService.dispenseMedication(testPrescription.getPrescriptionId());
 
         assertThat(result.getStatus()).isEqualTo("DISPENSED");
     }
 
     @Test
     void dispenseMedication_AlreadyDispensed_UpdatesAgain() {
+        Medication savedMed = medicationService.addMedication(testMedication);
+        
         testPrescription.setStatus("DISPENSED");
+        testPrescription = prescriptionRepository.save(testPrescription);
+        
+        testPrescriptionItem.setPrescription(testPrescription);
+        testPrescriptionItem.setMedication(savedMed);
+        prescriptionItemRepository.save(testPrescriptionItem);
 
-        when(prescriptionRepository.findById("PRES-001"))
-                .thenReturn(Optional.of(testPrescription));
-        when(prescriptionItemRepository.findByPrescriptionId("PRES-001"))
-                .thenReturn(Arrays.asList(testPrescriptionItem));
-        when(prescriptionRepository.save(any(Prescription.class)))
-                .thenReturn(testPrescription);
-
-        Prescription result = medicationService.dispenseMedication("PRES-001");
+        Prescription result = medicationService.dispenseMedication(testPrescription.getPrescriptionId());
 
         assertThat(result.getStatus()).isEqualTo("DISPENSED");
-        verify(prescriptionRepository).save(testPrescription);
     }
 }
